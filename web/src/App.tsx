@@ -4,11 +4,12 @@ import { Visualizer } from './components/Visualizer';
 import { ChatWindow } from './components/ChatWindow';
 import { ControlDeck } from './components/ControlDeck';
 import { TelemetryStrip } from './components/TelemetryStrip';
+import { LogTerminal } from './components/LogTerminal';
 import { RcaModal } from './components/RcaModal';
 import { AudioRecorder } from './audio/audio_recorder';
 import { AudioPlayer } from './audio/audio_player';
 import { StreamingWebSocketService } from './services/websocket';
-import { ConnectionState, ChatMessage, TelemetryMetric, RcaReport } from './types';
+import { ConnectionState, ChatMessage, TelemetryMetric, RcaReport, LogEntry } from './types';
 import { ShieldCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -25,12 +26,34 @@ export const App: React.FC = () => {
   const [totalFramesCount, setTotalFramesCount] = useState<number>(0);
   const [rcaReport, setRcaReport] = useState<RcaReport | null>(null);
   const [showRcaModal, setShowRcaModal] = useState<boolean>(false);
+  const [logs, setLogs] = useState<LogEntry[]>([
+    {
+      id: 'init-1',
+      timestamp: new Date().toLocaleTimeString(),
+      level: 'INFO',
+      tag: 'SYSTEM',
+      message: 'Console ready. Initialized 16kHz Linear16 A2A streaming client.',
+    },
+  ]);
 
   const recorderRef = useRef<AudioRecorder | null>(null);
   const playerRef = useRef<AudioPlayer | null>(null);
   const wsServiceRef = useRef<StreamingWebSocketService | null>(null);
   const timerRef = useRef<any>(null);
   const currentTranscriptRef = useRef<string>('');
+
+  const addLog = (level: LogEntry['level'], tag: string, message: string) => {
+    setLogs((prev) => [
+      ...prev.slice(-150), // keep latest 150 log entries
+      {
+        id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        timestamp: new Date().toLocaleTimeString(),
+        level,
+        tag,
+        message,
+      },
+    ]);
+  };
 
   // Initialize audio recorder and player
   useEffect(() => {
@@ -67,6 +90,7 @@ export const App: React.FC = () => {
     try {
       setConnectionState('CONNECTING');
       setDurationSec(0);
+      addLog('INFO', 'AUTH', 'Requesting ephemeral session ticket from API Gateway (/api/v1/session/start)...');
 
       // Create WebSocket Service with callbacks
       const wsService = new StreamingWebSocketService({
@@ -74,12 +98,14 @@ export const App: React.FC = () => {
           setSessionId(newSessionId);
           setConnectionState('LIVE');
           setIsStreaming(true);
+          addLog('SUCCESS', 'GECX', `BidiRunSession upstream ready (session: ${newSessionId})`);
 
           // Start microphone audio recording
           recorderRef.current?.start((base64Audio, rawInt16) => {
             setAudioData(rawInt16);
             wsServiceRef.current?.sendAudioChunk(base64Audio);
           });
+          addLog('AUDIO', 'MIC', 'Microphone active (16kHz 16-bit Mono Linear16, 50ms chunk interval)');
         },
         onSTT: (transcript, isFinal) => {
           if (!transcript) return;
@@ -87,9 +113,9 @@ export const App: React.FC = () => {
           if (isFinal) {
             currentTranscriptRef.current = '';
             setCurrentTranscript('');
+            addLog('SUCCESS', 'STT', `Recognized (Final): "${transcript}"`);
 
             setMessages((prev) => {
-              // Check if the last message was an unfinalized user transcript
               const last = prev[prev.length - 1];
               if (last && last.sender === 'user' && !last.isFinal) {
                 return [
@@ -118,12 +144,10 @@ export const App: React.FC = () => {
             playerRef.current?.queueAudio(audio);
           }
           if (text) {
+            addLog('SUCCESS', 'AGENT', `Text chunk received (${text.length} chars, completed=${turnCompleted})`);
             setMessages((prev) => {
               const updated = [...prev];
 
-              // CRITICAL TURN-TAKING FIX:
-              // If user was actively speaking (currentTranscriptRef is non-empty) but GECX began agent output
-              // before an explicit isFinal reached the client, commit the user's utterance first!
               if (currentTranscriptRef.current) {
                 const userSpeech = currentTranscriptRef.current;
                 currentTranscriptRef.current = '';
@@ -140,7 +164,6 @@ export const App: React.FC = () => {
 
               const last = updated[updated.length - 1];
               if (last && last.sender === 'agent' && !last.isFinal) {
-                // Smart chunk concatenation without redundant whitespace
                 return [
                   ...updated.slice(0, -1),
                   { ...last, text: last.text + text, isFinal: turnCompleted },
@@ -163,6 +186,7 @@ export const App: React.FC = () => {
         onBargeIn: () => {
           setIsBargeIn(true);
           playerRef.current?.flush();
+          addLog('WARN', 'BARGE-IN', 'User speech detected during agent voice playback. Audio buffer flushed.');
           setTimeout(() => setIsBargeIn(false), 800);
         },
         onTelemetry: (metric) => {
@@ -175,9 +199,15 @@ export const App: React.FC = () => {
           recorderRef.current?.stop();
           setRcaReport(report);
           setShowRcaModal(true);
+          addLog(
+            'ERROR',
+            'RCA',
+            `Session Disconnected (Code ${report.socket_close_info.raw_close_code}): ${report.socket_close_info.close_reason}`
+          );
         },
         onError: (errMsg) => {
           console.error('Streaming error:', errMsg);
+          addLog('ERROR', 'ERROR', errMsg);
         },
         onFrame: () => {
           setTotalFramesCount((prev) => prev + 1);
@@ -188,11 +218,16 @@ export const App: React.FC = () => {
 
       // 1. Control plane request for session ticket
       const sessionData = await wsService.startSession();
+      addLog('SUCCESS', 'AUTH', `Session ticket issued (TTL 60s, ID: ${sessionData.session_id.substring(0, 16)}...)`);
+
       // 2. Data plane connect via WebSocket
+      addLog('INFO', 'WS', `Connecting WebSocket data plane to ${sessionData.ws_endpoint}...`);
       await wsService.connect(sessionData.ws_endpoint, sessionData.session_ticket);
+      addLog('SUCCESS', 'WS', 'WebSocket Handshake 101 Switching Protocols Established.');
     } catch (err: any) {
       console.error('Failed to start session:', err);
       setConnectionState('ERROR');
+      addLog('ERROR', 'CONN_FAIL', `Session start failed: ${err.message || err}`);
       alert(`세션 연결 실패: ${err.message || err}`);
     }
   };
@@ -205,6 +240,7 @@ export const App: React.FC = () => {
       recorderRef.current?.stop();
       setIsStreaming(false);
       setAudioData(null);
+      addLog('WARN', 'AUDIO', 'Microphone recording paused by user.');
     } else {
       // Resume mic streaming
       recorderRef.current?.start((base64Audio, rawInt16) => {
@@ -212,6 +248,7 @@ export const App: React.FC = () => {
         wsServiceRef.current?.sendAudioChunk(base64Audio);
       });
       setIsStreaming(true);
+      addLog('AUDIO', 'MIC', 'Microphone recording resumed.');
     }
   };
 
@@ -225,6 +262,7 @@ export const App: React.FC = () => {
     setLatestMetric(null);
     currentTranscriptRef.current = '';
     setCurrentTranscript('');
+    addLog('INFO', 'SESSION', 'Session terminated cleanly by user (Code 1000).');
   };
 
   return (
@@ -254,7 +292,7 @@ export const App: React.FC = () => {
 
         {/* Content: 2-Column Split (Left Deck + Right Dialogue Stage) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[calc(100vh-14rem)]">
-          {/* Left Column: Audio Visualizer & Controls (4.5 cols / 38%) */}
+          {/* Left Column: Audio Visualizer, Controls, Spec & Diagnostic Terminal (4.5 cols / 38%) */}
           <div className="lg:col-span-5 flex flex-col gap-4">
             {/* Live Oscilloscope & Audio VU Meter */}
             <Visualizer
@@ -273,7 +311,7 @@ export const App: React.FC = () => {
             />
 
             {/* Architecture & Protocol Badge Card */}
-            <div className="rounded-2xl bg-white border border-slate-200/80 p-4 shadow-soft flex flex-col gap-2.5 text-xs font-mono">
+            <div className="rounded-2xl bg-white border border-slate-200/80 p-3.5 shadow-soft flex flex-col gap-2 text-xs font-mono">
               <div className="flex items-center justify-between text-slate-800 font-bold">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center">
@@ -281,12 +319,12 @@ export const App: React.FC = () => {
                   </div>
                   <span>SESSION INFRASTRUCTURE</span>
                 </div>
-                <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
                   READY
                 </span>
               </div>
 
-              <div className="space-y-1.5 text-slate-600 text-[11px] pt-1 border-t border-slate-100">
+              <div className="space-y-1 text-slate-600 text-[11px] pt-1 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <span>Backend Protocol:</span>
                   <strong className="text-slate-800">BidiRunSession (A2A)</strong>
@@ -299,12 +337,14 @@ export const App: React.FC = () => {
                   <span>Audio Encoding:</span>
                   <strong className="text-slate-800">LINEAR16 16kHz Mono</strong>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>Ingress Gateway:</span>
-                  <strong className="text-slate-800">Google API Gateway</strong>
-                </div>
               </div>
             </div>
+
+            {/* Live Diagnostic Log Terminal */}
+            <LogTerminal
+              logs={logs}
+              onClearLogs={() => setLogs([])}
+            />
           </div>
 
           {/* Right Column: Full-Height Clean Dialogue Window (7.5 cols / 62%) */}

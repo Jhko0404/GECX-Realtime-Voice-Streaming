@@ -73,3 +73,13 @@ export interface ChatMessage {
   isFinal?: boolean;
   latencyMs?: number;
 }
+
+export interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: 'INFO' | 'SUCCESS' | 'WARN' | 'ERROR' | 'AUDIO';
+  tag: string;
+  message: string;
+  details?: any;
+}
+
