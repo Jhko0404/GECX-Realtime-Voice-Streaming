@@ -17,11 +17,14 @@ export class StreamingWebSocketService {
   public isConnected: boolean = false;
   public currentSessionId: string = '';
 
+  private hasReceivedExplicitRcaReport = false;
+
   constructor(callbacks: WebSocketServiceCallbacks) {
     this.callbacks = callbacks;
   }
 
   async startSession(): Promise<SessionResponse> {
+    this.hasReceivedExplicitRcaReport = false;
     const res = await fetch('/api/v1/session/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,6 +41,7 @@ export class StreamingWebSocketService {
   }
 
   connect(wsEndpoint: string, ticket: string): Promise<void> {
+    this.hasReceivedExplicitRcaReport = false;
     return new Promise((resolve, reject) => {
       let url: string;
       if (wsEndpoint && (wsEndpoint.startsWith('ws://') || wsEndpoint.startsWith('wss://'))) {
@@ -92,6 +96,7 @@ export class StreamingWebSocketService {
           } else if (payload.telemetry) {
             this.callbacks.onTelemetry(payload.telemetry);
           } else if (payload.event === 'disconnected' && payload.rca_report) {
+            this.hasReceivedExplicitRcaReport = true;
             this.callbacks.onDisconnected(payload.rca_report);
             this.emitFrame('RX', 'SYSTEM', `Disconnected (Code: ${payload.rca_report.socket_close_info.raw_close_code})`, sizeBytes, payload);
           } else if (payload.event === 'error') {
@@ -109,8 +114,8 @@ export class StreamingWebSocketService {
           reason: event.reason,
         });
 
-        // If no explicit rca_report was received beforehand, synthesize default disconnect event
-        if (event.code !== 1000 && event.code !== 1001) {
+        // If no explicit rca_report was received beforehand from backend, synthesize fallback
+        if (!this.hasReceivedExplicitRcaReport && event.code !== 1000 && event.code !== 1001) {
           this.callbacks.onDisconnected({
             trace_id: `tr-${Date.now()}`,
             session_id: this.currentSessionId,
@@ -132,7 +137,7 @@ export class StreamingWebSocketService {
             socket_close_info: {
               raw_close_code: event.code,
               close_code_name: event.code === 1006 ? 'CLOSE_ABNORMAL (No Close Frame Received)' : `CLOSE_CODE_${event.code}`,
-              close_reason: event.reason || 'Peer connection terminated unexpectedly (80~120s timeout candidate)',
+              close_reason: event.reason || 'Peer connection terminated unexpectedly',
             },
           });
         }
