@@ -38,21 +38,22 @@ class GECXStreamingClient:
         self.is_connected = True
 
         # Send Initial SessionConfig Handshake
-        handshake_payload = {
-            "config": {
-                "session": f"{settings.gecx_app_resource_path}/sessions/{self.session_id}",
-                "inputAudioConfig": {
-                    "audioEncoding": "LINEAR16",
-                    "sampleRateHertz": 16000,
-                    "enableEchoCancellation": True
-                },
-                "outputAudioConfig": {
-                    "audioEncoding": "LINEAR16",
-                    "sampleRateHertz": 16000
-                },
-                "deployment": settings.gecx_deployment_resource_path
+        config_obj = {
+            "session": f"{settings.gecx_app_resource_path}/sessions/{self.session_id}",
+            "inputAudioConfig": {
+                "audioEncoding": "LINEAR16",
+                "sampleRateHertz": 16000,
+                "enableEchoCancellation": True
+            },
+            "outputAudioConfig": {
+                "audioEncoding": "LINEAR16",
+                "sampleRateHertz": 16000
             }
         }
+        if settings.DEPLOYMENT_ID and settings.DEPLOYMENT_ID not in ("default", "draft", ""):
+            config_obj["deployment"] = settings.gecx_deployment_resource_path
+
+        handshake_payload = {"config": config_obj}
 
         await self.ws.send(json.dumps(handshake_payload))
         logger.info("gecx_handshake_sent", session=self.session_id)

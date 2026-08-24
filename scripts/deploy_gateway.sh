@@ -48,9 +48,9 @@ sed "s|\${CLOUD_RUN_SERVICE_HOST}|${RUN_HOST}|g" api_gateway/openapi_gateway.yam
 echo -e "${GREEN}✔ OpenAPI 명세서에 백엔드 주소 바인딩 완료${NC}"
 
 # 4. Create API Resource if not exists
-if ! gcloud api-gateway apis describe "${API_ID}" --project="${PROJECT_ID}" &>/dev/null; then
+if ! gcloud api-gateway apis describe "${API_ID}" --project="${PROJECT_ID}" --quiet &>/dev/null; then
     echo -e "\n${BLUE}➕ API Gateway API 리소스 생성: ${API_ID}${NC}"
-    gcloud api-gateway apis create "${API_ID}" --project="${PROJECT_ID}"
+    gcloud api-gateway apis create "${API_ID}" --project="${PROJECT_ID}" --quiet
 fi
 
 # 5. Create API Config
@@ -59,27 +59,30 @@ gcloud api-gateway api-configs create "${CONFIG_ID}" \
     --api="${API_ID}" \
     --openapi-spec="${TEMP_SPEC}" \
     --backend-auth-service-account="${GATEWAY_SA}" \
-    --project="${PROJECT_ID}"
+    --project="${PROJECT_ID}" \
+    --quiet
 
 # 6. Deploy or Update Gateway
-if ! gcloud api-gateway gateways describe "${GATEWAY_ID}" --location="${REGION}" --project="${PROJECT_ID}" &>/dev/null; then
+if ! gcloud api-gateway gateways describe "${GATEWAY_ID}" --location="${REGION}" --project="${PROJECT_ID}" --quiet &>/dev/null; then
     echo -e "\n${BLUE}🚀 신규 API Gateway 생성: ${GATEWAY_ID}${NC}"
     gcloud api-gateway gateways create "${GATEWAY_ID}" \
         --api="${API_ID}" \
         --api-config="${CONFIG_ID}" \
         --location="${REGION}" \
-        --project="${PROJECT_ID}"
+        --project="${PROJECT_ID}" \
+        --quiet
 else
     echo -e "\n${BLUE}🔄 기존 API Gateway 설정 업데이트 중: ${GATEWAY_ID}${NC}"
     gcloud api-gateway gateways update "${GATEWAY_ID}" \
         --api="${API_ID}" \
         --api-config="${CONFIG_ID}" \
         --location="${REGION}" \
-        --project="${PROJECT_ID}"
+        --project="${PROJECT_ID}" \
+        --quiet
 fi
 
 # 7. Get Gateway Hostname
-GATEWAY_HOST=$(gcloud api-gateway gateways describe "${GATEWAY_ID}" --location="${REGION}" --project="${PROJECT_ID}" --format="value(defaultHostname)")
+GATEWAY_HOST=$(gcloud api-gateway gateways describe "${GATEWAY_ID}" --location="${REGION}" --project="${PROJECT_ID}" --format="value(defaultHostname)" --quiet)
 
 rm -f "${TEMP_SPEC}"
 

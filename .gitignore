@@ -25,3 +25,4 @@ rca_report_*.json
 # OS
 .DS_Store
 Thumbs.db
+benchmark_results_*.json

@@ -3,6 +3,7 @@ import json
 import uuid
 import asyncio
 import structlog
+import websockets
 from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
