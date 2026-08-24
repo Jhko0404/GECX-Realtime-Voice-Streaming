@@ -1,0 +1,55 @@
+swagger: "2.0"
+info:
+  title: GECX Real-Time Streaming Agent Gateway
+  description: Ingress security gateway and session control plane for GECX BidiRunSession Streaming BFF
+  version: 1.0.0
+schemes:
+  - https
+produces:
+  - application/json
+paths:
+  /api/v1/session/start:
+    post:
+      summary: Start a new streaming session and issue ephemeral signed token
+      operationId: startSession
+      x-google-backend:
+        address: https://${CLOUD_RUN_SERVICE_HOST}/api/v1/session/start
+        protocol: h2
+      responses:
+        200:
+          description: Session created and ephemeral ticket issued
+          schema:
+            type: object
+            properties:
+              session_id:
+                type: string
+              session_ticket:
+                type: string
+              ws_endpoint:
+                type: string
+              ticket_ttl_seconds:
+                type: integer
+              app_resource_path:
+                type: string
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+    options:
+      summary: CORS preflight for session start
+      operationId: corsSessionStart
+      x-google-backend:
+        address: https://${CLOUD_RUN_SERVICE_HOST}/api/v1/session/start
+      responses:
+        200:
+          description: CORS OK
+
+  /health:
+    get:
+      summary: Health check probe
+      operationId: healthCheck
+      x-google-backend:
+        address: https://${CLOUD_RUN_SERVICE_HOST}/health
+      responses:
+        200:
+          description: Service healthy

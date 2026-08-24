@@ -1,0 +1,8 @@
+{
+  "gateway_id": "gecx-agent-gateway",
+  "api_id": "gecx-streaming-api",
+  "config_id": "gecx-gateway-cfg-v1",
+  "region": "us-central1",
+  "project_id": "gemeni-workshop",
+  "service_account": "gecx-gateway-sa@gemeni-workshop.iam.gserviceaccount.com"
+}
