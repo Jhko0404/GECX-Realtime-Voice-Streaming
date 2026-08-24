@@ -1,23 +1,93 @@
+# ==============================================================================
+# Google Cloud API Gateway - OpenAPI 2.0 Specification (GECX Agent Gateway)
+# ==============================================================================
 swagger: "2.0"
 info:
-  title: GECX Real-Time Streaming Agent Gateway
-  description: Ingress security gateway and session control plane for GECX BidiRunSession Streaming BFF
-  version: 1.0.0
+  title: "GECX Real-Time Streaming Agent Gateway"
+  description: "Unified Enterprise Ingress Gateway for GECX Real-Time Voice Streaming, Telemetry, and Session Control Plane."
+  version: "1.0.0"
 schemes:
-  - https
+  - "https"
 produces:
-  - application/json
+  - "application/json"
+consumes:
+  - "application/json"
+
 paths:
-  /api/v1/session/start:
-    post:
-      summary: Start a new streaming session and issue ephemeral signed token
-      operationId: startSession
+
+  # ============================================================================
+  # 0. Web UI & Static Assets (Single Page Application Serving)
+  # ============================================================================
+  /:
+    get:
+      summary: "GECX Real-Time Voice Streaming Web Console Cockpit"
+      description: "Serves the dark-mode 60FPS real-time voice streaming cockpit UI."
+      operationId: "serveWebIndex"
       x-google-backend:
-        address: https://${CLOUD_RUN_SERVICE_HOST}/api/v1/session/start
-        protocol: h2
+        address: "https://${CLOUD_RUN_SERVICE_HOST}/"
+        jwt_audience: "https://${CLOUD_RUN_SERVICE_HOST}"
+      produces:
+        - "text/html"
       responses:
         200:
-          description: Session created and ephemeral ticket issued
+          description: "Web Console HTML Page"
+
+  /assets/{asset_file}:
+    get:
+      summary: "Static JS/CSS Asset Bundle"
+      description: "Serves bundled Vite frontend assets."
+      operationId: "serveAssets"
+      x-google-backend:
+        address: "https://${CLOUD_RUN_SERVICE_HOST}"
+        jwt_audience: "https://${CLOUD_RUN_SERVICE_HOST}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      parameters:
+        - name: "asset_file"
+          in: "path"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Static Asset File"
+
+  # ============================================================================
+  # 1. Health Checks
+  # ============================================================================
+  /health:
+    get:
+      summary: "Gateway Health Check"
+      operationId: "healthCheck"
+      x-google-backend:
+        address: "https://${CLOUD_RUN_SERVICE_HOST}/health"
+        jwt_audience: "https://${CLOUD_RUN_SERVICE_HOST}"
+      responses:
+        200:
+          description: "Service healthy"
+
+  /healthz:
+    get:
+      summary: "Gateway Health Check Alias"
+      operationId: "healthCheckAlias"
+      x-google-backend:
+        address: "https://${CLOUD_RUN_SERVICE_HOST}/health"
+        jwt_audience: "https://${CLOUD_RUN_SERVICE_HOST}"
+      responses:
+        200:
+          description: "Service healthy"
+
+  # ============================================================================
+  # 2. Control Plane Session Endpoints
+  # ============================================================================
+  /api/v1/session/start:
+    post:
+      summary: "Start a new streaming session and issue ephemeral signed token"
+      operationId: "startSession"
+      x-google-backend:
+        address: "https://${CLOUD_RUN_SERVICE_HOST}/api/v1/session/start"
+        jwt_audience: "https://${CLOUD_RUN_SERVICE_HOST}"
+      responses:
+        200:
+          description: "Session created and ephemeral ticket issued"
           schema:
             type: object
             properties:
@@ -32,24 +102,15 @@ paths:
               app_resource_path:
                 type: string
         401:
-          description: Unauthorized
+          description: "Unauthorized"
         500:
-          description: Internal server error
+          description: "Internal server error"
     options:
-      summary: CORS preflight for session start
-      operationId: corsSessionStart
+      summary: "CORS preflight for session start"
+      operationId: "corsSessionStart"
       x-google-backend:
-        address: https://${CLOUD_RUN_SERVICE_HOST}/api/v1/session/start
+        address: "https://${CLOUD_RUN_SERVICE_HOST}/api/v1/session/start"
+        jwt_audience: "https://${CLOUD_RUN_SERVICE_HOST}"
       responses:
         200:
-          description: CORS OK
-
-  /health:
-    get:
-      summary: Health check probe
-      operationId: healthCheck
-      x-google-backend:
-        address: https://${CLOUD_RUN_SERVICE_HOST}/health
-      responses:
-        200:
-          description: Service healthy
+          description: "CORS OK"
