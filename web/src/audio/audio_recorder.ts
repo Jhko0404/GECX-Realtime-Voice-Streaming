@@ -4,10 +4,13 @@ export class AudioRecorder {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private workletNode: AudioWorkletNode | null = null;
   private onChunkCallback: ((base64Audio: string, rawInt16: Int16Array) => void) | null = null;
+  private isTemporarilyPaused: boolean = false;
+  private pauseTimeout: any = null;
   public isRecording: boolean = false;
 
   async start(onChunk: (base64Audio: string, rawInt16: Int16Array) => void): Promise<void> {
     this.onChunkCallback = onChunk;
+    this.isTemporarilyPaused = false;
 
     // 1. Request microphone access
     this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -27,7 +30,6 @@ export class AudioRecorder {
     }
 
     // 3. Load AudioWorklet module
-    // We create a Blob URL to load the worklet safely in Vite / Bundled environments
     const workletCode = `
       class PCM16WorkletProcessor extends AudioWorkletProcessor {
         constructor() {
@@ -80,6 +82,11 @@ export class AudioRecorder {
     this.workletNode = new AudioWorkletNode(this.audioContext, 'pcm16-worklet-processor');
 
     this.workletNode.port.onmessage = (event) => {
+      // If paused due to recent Barge-in debounce (Action Item ①), skip forwarding to allow turn transition
+      if (this.isTemporarilyPaused) {
+        return;
+      }
+
       const arrayBuffer = event.data as ArrayBuffer;
       const int16Array = new Int16Array(arrayBuffer);
 
@@ -101,8 +108,28 @@ export class AudioRecorder {
     this.isRecording = true;
   }
 
+  /**
+   * Action Item ①: Temporal Gap Debounce (150ms) on Barge-In Interruption.
+   * Gives GECX CES state machine temporal window to transition cleanly to User Turn.
+   */
+  pauseTemporarily(durationMs: number = 150): void {
+    this.isTemporarilyPaused = true;
+    if (this.pauseTimeout) {
+      clearTimeout(this.pauseTimeout);
+    }
+    this.pauseTimeout = setTimeout(() => {
+      this.isTemporarilyPaused = false;
+      this.pauseTimeout = null;
+    }, durationMs);
+  }
+
   stop(): void {
     this.isRecording = false;
+    this.isTemporarilyPaused = false;
+    if (this.pauseTimeout) {
+      clearTimeout(this.pauseTimeout);
+      this.pauseTimeout = null;
+    }
     if (this.workletNode) {
       this.workletNode.disconnect();
       this.workletNode = null;
@@ -121,3 +148,4 @@ export class AudioRecorder {
     }
   }
 }
+

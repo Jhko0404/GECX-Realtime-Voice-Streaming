@@ -160,10 +160,28 @@
 
 ---
 
+## 6. GECX 1007 Barge-In & 인터럽트 상태 머신 충돌 이슈
+
+### 🚨 Issue 6.1: 말 끊기(Barge-in) 시 `Code 1007 (generic::invalid_argument / failed_precondition)` 단절
+* **증상**: 긴 대화 도중 사용자가 에이전트 음성 출력 중간에 끼어들거나(Barge-In) 추임새를 넣는 순간 업스트림 WebSocket이 강제 단절됨 (`Code 1007`).
+* **원인 (Root Cause)**:
+  * GECX CES 상태 머신이 에이전트 발화 중 사용자 오디오 청크를 수신하여 `User Turn`으로 상태를 전환하는 동안, 클라이언트로부터 연속 오디오 청크가 0ms 여유 없이 밀려들어 패킷 순서 충돌 및 내부 상태 예외 발생.
+* **해결 방법 (Solution)**:
+  1. **오디오 패킷 주입 로직의 '중단 인지' 연동 (Action Item ①)**:
+     * `interruptionSignal` 수신 즉시 로컬 재생 버퍼 플러시(`AudioPlayer.flush()`).
+     * `AudioRecorder.pauseTemporarily(150)`를 적용하여 **150ms 템포럴 갭 디바운스**를 주어 GECX 상태 머신이 User Turn으로 안전하게 전환되도록 보장.
+  2. **VAD 파라미터 임시 완화 (Action Item ②)**:
+     * Start of Speech(SOS) 민감도를 0.30~0.40으로 조정하고 연속 유효 프레임을 4프레임(160~200ms)으로 설정하여 짧은 잡음으로 인한 급격한 턴 전환 방지.
+  3. **SEANet 기반 Adaptive Noise Cancellation 활성화 (Action Item ③)**:
+     * GECX Deployment & Channel Settings에서 Adaptive Noise Cancellation을 활성화하여 주변 소음 및 False Barge-In 차단.
+  * 📄 상세 기술 가이드: [`docs/gecx_1007_turn_bargein_resolution_guide.md`](./gecx_1007_turn_bargein_resolution_guide.md)
+
+---
+
 ## 📊 트러블슈팅 요약 매트릭스
 
 | 영역 | 이슈 요약 | 근본 원인 | 해결 방안 | 적용 결과 |
-| :--- | :--- | :--- | :--- | :---: |
+| :--- | :--- | :--- | :--- | :--- |
 | **인프라** | API Gateway 비대화형 대기 | CLI 확인 프롬프트 블로킹 | `--quiet` 플래그 추가 | 자동화 배포 완수 |
 | **인프라** | Cloud Build 용량 과다 | 대용량 wav 파일 업로드 | `.dockerignore` 구성 | 빌드 컨텍스트 99% 절감 |
 | **보안** | WebSocket 403 Forbidden | Cloud Run IAM 미인증 차단 | `allUsers` 권한 + JWT 티켓 인가 | 2계층 보안 확립 |
@@ -172,4 +190,6 @@
 | **GECX** | 1008 Not Found | 불일치하는 deployment ID | deployment 파라미터 옵셔널화 | 초안/라이브 자동 연동 |
 | **스트리밍**| 80~120s 침묵 단절 위험 | 무음 시 패킷 전송 중단 | 50ms Always-On + RCA 로깅 | 5분(300s) 연속 전송 성공 |
 | **네트워크**| Gateway WebSocket 1006 | API Gateway WS 미지원 | Control/Data Plane 분리 WSS 라우팅 | 5회 연속 100% E2E 검증 |
+| **Barge-In**| 1007 Invalid Argument | 턴 전환 시 오디오 충돌 | **150ms 템포럴 갭 + 재생 플러시** | **Barge-in 세션 안정화** |
+
 

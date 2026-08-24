@@ -186,7 +186,8 @@ export const App: React.FC = () => {
         onBargeIn: () => {
           setIsBargeIn(true);
           playerRef.current?.flush();
-          addLog('WARN', 'BARGE-IN', 'User speech detected during agent voice playback. Audio buffer flushed.');
+          recorderRef.current?.pauseTemporarily(150);
+          addLog('WARN', 'BARGE-IN', 'User speech detected during agent voice playback. Audio playback flushed & 150ms temporal gap applied for clean Turn transition.');
           setTimeout(() => setIsBargeIn(false), 800);
         },
         onTelemetry: (metric) => {
