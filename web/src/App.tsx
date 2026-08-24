@@ -4,12 +4,12 @@ import { Visualizer } from './components/Visualizer';
 import { ChatWindow } from './components/ChatWindow';
 import { ControlDeck } from './components/ControlDeck';
 import { TelemetryStrip } from './components/TelemetryStrip';
-import { FrameInspector } from './components/FrameInspector';
 import { RcaModal } from './components/RcaModal';
 import { AudioRecorder } from './audio/audio_recorder';
 import { AudioPlayer } from './audio/audio_player';
 import { StreamingWebSocketService } from './services/websocket';
-import { ConnectionState, ChatMessage, WebSocketFrame, TelemetryMetric, RcaReport } from './types';
+import { ConnectionState, ChatMessage, TelemetryMetric, RcaReport } from './types';
+import { ShieldCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [connectionState, setConnectionState] = useState<ConnectionState>('IDLE');
@@ -22,7 +22,7 @@ export const App: React.FC = () => {
   const [isBargeIn, setIsBargeIn] = useState<boolean>(false);
   const [rmsDb, setRmsDb] = useState<number>(-100);
   const [latestMetric, setLatestMetric] = useState<TelemetryMetric | null>(null);
-  const [frames, setFrames] = useState<WebSocketFrame[]>([]);
+  const [totalFramesCount, setTotalFramesCount] = useState<number>(0);
   const [rcaReport, setRcaReport] = useState<RcaReport | null>(null);
   const [showRcaModal, setShowRcaModal] = useState<boolean>(false);
 
@@ -30,8 +30,9 @@ export const App: React.FC = () => {
   const playerRef = useRef<AudioPlayer | null>(null);
   const wsServiceRef = useRef<StreamingWebSocketService | null>(null);
   const timerRef = useRef<any>(null);
+  const currentTranscriptRef = useRef<string>('');
 
-  // Initialize instances
+  // Initialize audio recorder and player
   useEffect(() => {
     playerRef.current = new AudioPlayer();
     recorderRef.current = new AudioRecorder();
@@ -81,19 +82,34 @@ export const App: React.FC = () => {
           });
         },
         onSTT: (transcript, isFinal) => {
+          if (!transcript) return;
+
           if (isFinal) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `usr-${Date.now()}`,
-                sender: 'user',
-                text: transcript,
-                timestamp: new Date().toLocaleTimeString(),
-                isFinal: true,
-              },
-            ]);
+            currentTranscriptRef.current = '';
             setCurrentTranscript('');
+
+            setMessages((prev) => {
+              // Check if the last message was an unfinalized user transcript
+              const last = prev[prev.length - 1];
+              if (last && last.sender === 'user' && !last.isFinal) {
+                return [
+                  ...prev.slice(0, -1),
+                  { ...last, text: transcript, isFinal: true },
+                ];
+              }
+              return [
+                ...prev,
+                {
+                  id: `usr-${Date.now()}`,
+                  sender: 'user',
+                  text: transcript,
+                  timestamp: new Date().toLocaleTimeString(),
+                  isFinal: true,
+                },
+              ];
+            });
           } else {
+            currentTranscriptRef.current = transcript;
             setCurrentTranscript(transcript);
           }
         },
@@ -103,16 +119,36 @@ export const App: React.FC = () => {
           }
           if (text) {
             setMessages((prev) => {
-              const last = prev[prev.length - 1];
+              const updated = [...prev];
+
+              // CRITICAL TURN-TAKING FIX:
+              // If user was actively speaking (currentTranscriptRef is non-empty) but GECX began agent output
+              // before an explicit isFinal reached the client, commit the user's utterance first!
+              if (currentTranscriptRef.current) {
+                const userSpeech = currentTranscriptRef.current;
+                currentTranscriptRef.current = '';
+                setCurrentTranscript('');
+
+                updated.push({
+                  id: `usr-${Date.now()}`,
+                  sender: 'user',
+                  text: userSpeech,
+                  timestamp: new Date().toLocaleTimeString(),
+                  isFinal: true,
+                });
+              }
+
+              const last = updated[updated.length - 1];
               if (last && last.sender === 'agent' && !last.isFinal) {
-                // Update existing agent message chunk
+                // Smart chunk concatenation without redundant whitespace
                 return [
-                  ...prev.slice(0, -1),
-                  { ...last, text: last.text + ' ' + text, isFinal: turnCompleted },
+                  ...updated.slice(0, -1),
+                  { ...last, text: last.text + text, isFinal: turnCompleted },
                 ];
               }
+
               return [
-                ...prev,
+                ...updated,
                 {
                   id: `agt-${Date.now()}`,
                   sender: 'agent',
@@ -143,8 +179,8 @@ export const App: React.FC = () => {
         onError: (errMsg) => {
           console.error('Streaming error:', errMsg);
         },
-        onFrame: (frame) => {
-          setFrames((prev) => [...prev.slice(-100), frame]); // Keep latest 100 frames in memory
+        onFrame: () => {
+          setTotalFramesCount((prev) => prev + 1);
         },
       });
 
@@ -187,11 +223,13 @@ export const App: React.FC = () => {
     setIsStreaming(false);
     setAudioData(null);
     setLatestMetric(null);
+    currentTranscriptRef.current = '';
+    setCurrentTranscript('');
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col antialiased relative selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Soft Ambient Chromatic Background Orbs (Non-intrusive vibrant lighting) */}
+      {/* Soft Ambient Chromatic Background Orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl" />
         <div className="absolute top-1/4 -right-32 w-96 h-96 rounded-full bg-indigo-200/35 blur-3xl" />
@@ -206,44 +244,77 @@ export const App: React.FC = () => {
         durationSec={durationSec}
       />
 
-      {/* 2. Main 2-Column Split Cockpit Layout */}
-      <main className="flex-1 p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 max-w-[1700px] w-full mx-auto relative z-10">
-        {/* Left Column: Conversational & Audio Stream (45% -> 5 cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-4 h-[calc(100vh-6.5rem)]">
-          {/* Canvas 2D Live Oscilloscope */}
-          <Visualizer
-            audioData={audioData}
-            isStreaming={isStreaming}
-            isBargeIn={isBargeIn}
-            rmsDb={rmsDb}
-          />
+      {/* 2. Main High-End Cockpit Layout */}
+      <main className="flex-1 p-4 lg:p-6 flex flex-col gap-5 max-w-[1500px] w-full mx-auto relative z-10">
+        {/* Top: 4-Card Vibrant Telemetry Strip */}
+        <TelemetryStrip
+          metric={latestMetric}
+          totalFrames={totalFramesCount}
+        />
 
-          {/* Real-time STT & Dialogue Window */}
-          <ChatWindow
-            messages={messages}
-            currentTranscript={currentTranscript}
-            isStreaming={isStreaming}
-          />
+        {/* Content: 2-Column Split (Left Deck + Right Dialogue Stage) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[calc(100vh-14rem)]">
+          {/* Left Column: Audio Visualizer & Controls (4.5 cols / 38%) */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            {/* Live Oscilloscope & Audio VU Meter */}
+            <Visualizer
+              audioData={audioData}
+              isStreaming={isStreaming}
+              isBargeIn={isBargeIn}
+              rmsDb={rmsDb}
+            />
 
-          {/* Control Deck */}
-          <ControlDeck
-            connectionState={connectionState}
-            isStreaming={isStreaming}
-            onToggleStreaming={handleToggleStreaming}
-            onEndSession={handleEndSession}
-          />
-        </div>
+            {/* Streaming Control Deck */}
+            <ControlDeck
+              connectionState={connectionState}
+              isStreaming={isStreaming}
+              onToggleStreaming={handleToggleStreaming}
+              onEndSession={handleEndSession}
+            />
 
-        {/* Right Column: Real-time Telemetry & WebSocket Inspector (55% -> 7 cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-4 h-[calc(100vh-6.5rem)]">
-          {/* Real-time Telemetry Metric Cards */}
-          <TelemetryStrip
-            metric={latestMetric}
-            totalFrames={frames.length}
-          />
+            {/* Architecture & Protocol Badge Card */}
+            <div className="rounded-2xl bg-white border border-slate-200/80 p-4 shadow-soft flex flex-col gap-2.5 text-xs font-mono">
+              <div className="flex items-center justify-between text-slate-800 font-bold">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  </div>
+                  <span>SESSION INFRASTRUCTURE</span>
+                </div>
+                <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                  READY
+                </span>
+              </div>
 
-          {/* Live WebSocket Frame Stream Inspector */}
-          <FrameInspector frames={frames} />
+              <div className="space-y-1.5 text-slate-600 text-[11px] pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span>Backend Protocol:</span>
+                  <strong className="text-slate-800">BidiRunSession (A2A)</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Security Auth:</span>
+                  <strong className="text-indigo-600 font-semibold">JWT Ticket (TTL 60s)</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Audio Encoding:</span>
+                  <strong className="text-slate-800">LINEAR16 16kHz Mono</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Ingress Gateway:</span>
+                  <strong className="text-slate-800">Google API Gateway</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Full-Height Clean Dialogue Window (7.5 cols / 62%) */}
+          <div className="lg:col-span-7 flex flex-col h-full">
+            <ChatWindow
+              messages={messages}
+              currentTranscript={currentTranscript}
+              isStreaming={isStreaming}
+            />
+          </div>
         </div>
       </main>
 

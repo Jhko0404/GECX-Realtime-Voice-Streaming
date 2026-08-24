@@ -99,9 +99,9 @@ async def test_all_features_and_buttons():
     print("  ✔ [RCA Report] Diagnostics JSON Schema & Metrics Verified Successfully")
 
     # -------------------------------------------------------------------------
-    # Button 7: Frame Inspector Filter Logic
+    # Button 7: Message & Telemetry Event Classification Logic
     # -------------------------------------------------------------------------
-    print("\n▶ [Test 7] Testing Frame Inspector Filter Tab Categories...")
+    print("\n▶ [Test 7] Testing Message & Telemetry Event Classification Logic...")
     test_frames = [
         {"id": "1", "type": "AUDIO_CHUNK", "direction": "TX"},
         {"id": "2", "type": "STT_TRANSCRIPT", "direction": "RX"},
@@ -115,7 +115,7 @@ async def test_all_features_and_buttons():
     assert len(audio_filtered) == 1, "Audio filter mismatch"
     assert len(stt_filtered) == 2, "STT filter mismatch"
     assert len(system_filtered) == 2, "System filter mismatch"
-    print("  ✔ [Frame Inspector] Filter Tabs (ALL, AUDIO, STT, SYSTEM) logic verified")
+    print("  ✔ [Event Classifier] Audio, STT, and System event logic verified")
 
     # -------------------------------------------------------------------------
     # Button 8: Health Probe (/health)
