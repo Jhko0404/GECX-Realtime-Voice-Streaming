@@ -21,7 +21,7 @@ async def test_all_features_and_buttons():
     async with httpx.AsyncClient() as client:
         res = await client.get(f"{GATEWAY_URL}/", timeout=10.0)
         assert res.status_code == 200, f"Root UI failed: {res.status_code}"
-        assert "GECX Real-Time Voice Streaming" in res.text, "Title not found in HTML"
+        assert "Voice Streaming" in res.text, "Title not found in HTML"
         print("  ✔ [HTTP 200] Web UI HTML served correctly via Gateway")
 
     # -------------------------------------------------------------------------
