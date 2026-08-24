@@ -18,88 +18,99 @@ export const TelemetryStrip: React.FC<TelemetryStripProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 select-none">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 select-none">
       {/* Card 1: Chunks Sent & Data Rate (Vibrant Indigo) */}
-      <div className="rounded-2xl bg-gradient-to-br from-white via-indigo-50/30 to-indigo-50/70 border border-indigo-200/80 p-3.5 shadow-soft flex flex-col justify-between">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-mono font-bold text-indigo-700 uppercase">Audio Chunks (TX)</span>
-          <div className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+      <div className="relative rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 shadow-soft hover:shadow-soft-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-indigo-500 via-indigo-600 to-sky-400" />
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Audio Chunks (TX)</span>
+          <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 group-hover:scale-110 transition">
             <Radio className="w-3.5 h-3.5" />
           </div>
         </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-mono font-extrabold text-slate-900">
-            {metric ? metric.seq : 0}
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl lg:text-3xl font-mono font-extrabold text-slate-900 tracking-tight">
+            {metric ? metric.seq.toLocaleString() : 0}
           </span>
           <span className="text-xs font-mono font-semibold text-indigo-600">
             ({formatBytes(metric ? metric.bytes_sent : 0)})
           </span>
         </div>
-        <p className="text-[10px] font-mono text-slate-500 mt-1">
-          Target: <strong className="text-indigo-600">20 chunks/s (50ms)</strong>
-        </p>
+        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-slate-100">
+          <span>Cadence</span>
+          <strong className="text-indigo-600 font-semibold">20 chunks/s (50ms)</strong>
+        </div>
       </div>
 
       {/* Card 2: Packet Cadence Interval (Vibrant Sky/Cyan) */}
-      <div className="rounded-2xl bg-gradient-to-br from-white via-sky-50/30 to-sky-50/70 border border-sky-200/80 p-3.5 shadow-soft flex flex-col justify-between">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-mono font-bold text-sky-700 uppercase">Cadence Interval</span>
-          <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
+      <div className="relative rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 shadow-soft hover:shadow-soft-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-sky-400 via-teal-400 to-emerald-400" />
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Cadence Interval</span>
+          <div className="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100 group-hover:scale-110 transition">
             <Gauge className="w-3.5 h-3.5" />
           </div>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-mono font-extrabold text-slate-900">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl lg:text-3xl font-mono font-extrabold text-slate-900 tracking-tight">
             {metric ? `${metric.chunk_interval_ms.toFixed(1)}` : '0.0'}
           </span>
-          <span className="text-xs font-mono font-semibold text-sky-600">ms</span>
+          <span className="text-xs font-mono font-bold text-sky-600">ms</span>
         </div>
-        <p className="text-[10px] font-mono text-slate-500 mt-1">
-          Jitter: <strong className="text-sky-600">{metric && metric.chunk_interval_ms > 0 ? `±${Math.abs(metric.chunk_interval_ms - 50).toFixed(1)}ms` : '0ms'}</strong>
-        </p>
+        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-slate-100">
+          <span>Packet Jitter</span>
+          <strong className="text-sky-600 font-semibold">{metric && metric.chunk_interval_ms > 0 ? `±${Math.abs(metric.chunk_interval_ms - 50).toFixed(1)}ms` : '0.0ms'}</strong>
+        </div>
       </div>
 
       {/* Card 3: Audio RMS dBFS (Vibrant Emerald) */}
-      <div className="rounded-2xl bg-gradient-to-br from-white via-emerald-50/30 to-emerald-50/70 border border-emerald-200/80 p-3.5 shadow-soft flex flex-col justify-between">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-mono font-bold text-emerald-700 uppercase">Audio RMS Level</span>
-          <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+      <div className="relative rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 shadow-soft hover:shadow-soft-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-emerald-400 via-teal-500 to-indigo-500" />
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Audio RMS Level</span>
+          <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:scale-110 transition">
             <Volume2 className="w-3.5 h-3.5" />
           </div>
         </div>
-        <div className="flex items-baseline gap-1">
+        <div className="flex items-baseline gap-1.5">
           <span
-            className={`text-2xl font-mono font-extrabold ${
+            className={`text-2xl lg:text-3xl font-mono font-extrabold tracking-tight ${
               metric && metric.rms_db > -45 ? 'text-emerald-600' : 'text-slate-900'
             }`}
           >
             {metric ? `${metric.rms_db.toFixed(1)}` : '-∞'}
           </span>
-          <span className="text-xs font-mono font-semibold text-emerald-600">dBFS</span>
+          <span className="text-xs font-mono font-bold text-emerald-600">dBFS</span>
         </div>
-        <p className="text-[10px] font-mono text-slate-500 mt-1">
-          State: <strong className={metric && metric.rms_db > -45 ? 'text-emerald-700' : 'text-slate-500'}>{metric && metric.rms_db > -45 ? 'Active Speech' : 'Silence Floor'}</strong>
-        </p>
+        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-slate-100">
+          <span>VAD Sensor</span>
+          <strong className={metric && metric.rms_db > -45 ? 'text-emerald-600 font-bold' : 'text-slate-500 font-medium'}>
+            {metric && metric.rms_db > -45 ? '● Active Speech' : '○ Ambient Floor'}
+          </strong>
+        </div>
       </div>
 
-      {/* Card 4: Silence Duration & Total Frames (Vibrant Amber/Rose) */}
-      <div className="rounded-2xl bg-gradient-to-br from-white via-amber-50/30 to-amber-50/70 border border-amber-200/80 p-3.5 shadow-soft flex flex-col justify-between">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-mono font-bold text-amber-700 uppercase">Silence Timer</span>
-          <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+      {/* Card 4: Silence Duration & Total Frames (Vibrant Amber/Purple) */}
+      <div className="relative rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 shadow-soft hover:shadow-soft-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400" />
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Silence Duration</span>
+          <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 group-hover:scale-110 transition">
             <Moon className="w-3.5 h-3.5" />
           </div>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-mono font-extrabold text-amber-600">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl lg:text-3xl font-mono font-extrabold text-amber-600 tracking-tight">
             {metric ? `${metric.silence_sec.toFixed(1)}` : '0.0'}
           </span>
-          <span className="text-xs font-mono font-semibold text-amber-700">sec</span>
+          <span className="text-xs font-mono font-bold text-amber-600">sec</span>
         </div>
-        <p className="text-[10px] font-mono text-slate-500 mt-1">
-          Total WS Frames: <strong className="text-amber-700">{totalFrames}</strong>
-        </p>
+        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2 pt-2 border-t border-slate-100">
+          <span>Total Stream Frames</span>
+          <strong className="text-slate-700 font-bold">{totalFrames.toLocaleString()}</strong>
+        </div>
       </div>
     </div>
   );
 };
+

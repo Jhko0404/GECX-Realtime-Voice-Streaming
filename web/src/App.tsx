@@ -312,31 +312,35 @@ export const App: React.FC = () => {
             />
 
             {/* Architecture & Protocol Badge Card */}
-            <div className="rounded-2xl bg-white border border-slate-200/80 p-3.5 shadow-soft flex flex-col gap-2 text-xs font-mono">
+            <div className="rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-3.5 shadow-soft flex flex-col gap-2 text-xs font-mono">
               <div className="flex items-center justify-between text-slate-800 font-bold">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
                     <ShieldCheck className="w-3.5 h-3.5" />
                   </div>
-                  <span>SESSION INFRASTRUCTURE</span>
+                  <span className="tracking-wide">SESSION INFRASTRUCTURE</span>
                 </div>
-                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80">
                   READY
                 </span>
               </div>
 
-              <div className="space-y-1 text-slate-600 text-[11px] pt-1 border-t border-slate-100">
+              <div className="space-y-1.5 text-slate-600 text-[11px] pt-1.5 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <span>Backend Protocol:</span>
-                  <strong className="text-slate-800">BidiRunSession (A2A)</strong>
+                  <span className="text-slate-400">Backend Protocol:</span>
+                  <strong className="text-slate-800 font-bold">BidiRunSession (A2A)</strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Security Auth:</span>
-                  <strong className="text-indigo-600 font-semibold">JWT Ticket (TTL 60s)</strong>
+                  <span className="text-slate-400">Security Auth:</span>
+                  <strong className="text-indigo-600 font-bold">JWT Ticket (TTL 60s)</strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Audio Encoding:</span>
-                  <strong className="text-slate-800">LINEAR16 16kHz Mono</strong>
+                  <span className="text-slate-400">Audio Encoding:</span>
+                  <strong className="text-slate-800 font-bold">LINEAR16 · 16kHz Mono</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Ingress Gateway:</span>
+                  <strong className="text-slate-800 font-bold">Google API Gateway</strong>
                 </div>
               </div>
             </div>
