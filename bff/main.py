@@ -5,7 +5,7 @@ import asyncio
 import structlog
 import websockets
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, status
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -45,8 +45,8 @@ recent_telemetry_logs: Dict[str, Any] = {}
 
 class SessionStartRequest(BaseModel):
     client_id: Optional[str] = "web-client"
-    requested_deployment: Optional[str] = "default"
-    enable_echo_cancellation: Optional[bool] = True
+    app_id: Optional[str] = None
+    sample_rate: Optional[int] = 16000
 
 class SessionStartResponse(BaseModel):
     session_id: str
@@ -61,15 +61,21 @@ async def health_check():
     return {"status": "UP", "service": settings.SERVICE_NAME, "project": settings.PROJECT_ID}
 
 @app.post("/api/v1/session/start", response_model=SessionStartResponse)
-async def start_session(req: SessionStartRequest):
+async def start_session(req: SessionStartRequest, request: Request):
     """Control Plane: Initiates a new session and returns a signed JWT ticket."""
     session_id = f"sess-{uuid.uuid4()}"
     ticket = create_session_ticket(session_id=session_id)
     
+    # Determine appropriate WebSocket endpoint
+    ws_endpoint = "/ws/stream"
+    host_header = request.headers.get("x-forwarded-host") or request.headers.get("host") or ""
+    if "gateway.dev" in host_header or os.getenv("K_SERVICE"):
+        ws_endpoint = "wss://gecx-streaming-bff-cwljmdzpfa-uc.a.run.app/ws/stream"
+    
     response = SessionStartResponse(
         session_id=session_id,
         session_ticket=ticket,
-        ws_endpoint="/ws/stream",
+        ws_endpoint=ws_endpoint,
         ticket_ttl_seconds=60,
         app_resource_path=settings.gecx_app_resource_path,
         audio_config={
@@ -78,7 +84,7 @@ async def start_session(req: SessionStartRequest):
             "chunk_duration_ms": 50
         }
     )
-    logger.info("session_started_control_plane", session_id=session_id)
+    logger.info("session_started_control_plane", session_id=session_id, ws_endpoint=ws_endpoint)
     return response
 
 @app.get("/api/v1/telemetry/{session_id}")

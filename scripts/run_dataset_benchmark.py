@@ -47,10 +47,10 @@ async def run_scenario_stream(wav_path: str, target_host: str, scenario_meta: di
 
     # Resolve WebSocket URL (Cloud Run direct or Gateway)
     # If gateway host is uc.gateway.dev, we connect to Cloud Run host directly or via host header
-    cloud_run_host = "gecx-streaming-bff-cwljmdzpfa-uc.a.run.app"
-    ws_protocol = "wss" if target_host.startswith("https") else "ws"
-    
-    if "gateway.dev" in target_host:
+    if ws_endpoint.startswith("ws://") or ws_endpoint.startswith("wss://"):
+        delim = "&" if "?" in ws_endpoint else "?"
+        ws_url = f"{ws_endpoint}{delim}ticket={ticket}"
+    elif "gateway.dev" in target_host:
         ws_url = f"wss://{cloud_run_host}{ws_endpoint}?ticket={ticket}"
     else:
         clean_host = target_host.replace("https://", "").replace("http://", "")

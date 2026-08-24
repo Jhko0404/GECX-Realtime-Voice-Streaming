@@ -89,12 +89,19 @@ gcloud run deploy "${SERVICE_NAME}" \
     --set-env-vars="PROJECT_ID=${PROJECT_ID},LOCATION=${LOCATION},APP_ID=${APP_ID},REGION=${REGION},SERVICE_NAME=${SERVICE_NAME}" \
     --quiet
 
-# 5. Grant run.invoker to Gateway SA
-echo -e "\n${BLUE}🔒 API Gateway 호출자(gecx-gateway-sa)에게 Cloud Run 호출 권한(roles/run.invoker)을 부여합니다...${NC}"
+# 5. Grant run.invoker to Gateway SA & allUsers (for direct WebSocket ingress with JWT ticket)
+echo -e "\n${BLUE}🔒 API Gateway(gecx-gateway-sa) 및 Data Plane WebSocket(allUsers)에 roles/run.invoker를 부여합니다...${NC}"
 gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
     --region="${REGION}" \
     --project="${PROJECT_ID}" \
     --member="serviceAccount:${GATEWAY_SA}" \
+    --role="roles/run.invoker" \
+    --quiet
+
+gcloud run services add-iam-policy-binding "${SERVICE_NAME}" \
+    --region="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --member="allUsers" \
     --role="roles/run.invoker" \
     --quiet
 

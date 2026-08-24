@@ -39,11 +39,21 @@ export class StreamingWebSocketService {
 
   connect(wsEndpoint: string, ticket: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Build proper WebSocket protocol (ws or wss based on window.location)
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const url = `${protocol}//${host}${wsEndpoint}?ticket=${encodeURIComponent(ticket)}`;
+      let url: string;
+      if (wsEndpoint && (wsEndpoint.startsWith('ws://') || wsEndpoint.startsWith('wss://'))) {
+        const delimiter = wsEndpoint.includes('?') ? '&' : '?';
+        url = `${wsEndpoint}${delimiter}ticket=${encodeURIComponent(ticket)}`;
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        let host = window.location.host;
+        // Google Cloud API Gateway does not support WebSocket passthrough; route to Cloud Run BFF
+        if (host.includes('gateway.dev')) {
+          host = 'gecx-streaming-bff-cwljmdzpfa-uc.a.run.app';
+        }
+        url = `${protocol}//${host}${wsEndpoint}?ticket=${encodeURIComponent(ticket)}`;
+      }
 
+      console.log('[StreamingWebSocketService] Connecting WebSocket to:', url);
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
