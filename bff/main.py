@@ -57,6 +57,7 @@ class SessionStartResponse(BaseModel):
     audio_config: Dict[str, Any]
 
 @app.get("/health")
+@app.get("/healthz")
 async def health_check():
     return {"status": "UP", "service": settings.SERVICE_NAME, "project": settings.PROJECT_ID}
 
@@ -143,27 +144,32 @@ async def websocket_streaming_endpoint(
 
     # 4. Bidirectional Streaming Tasks
     async def client_to_gecx_loop():
-        """Reads audio chunks from client and forwards to GECX."""
+        """Reads audio chunks from client (text JSON or binary PCM) and forwards to GECX."""
         try:
             while True:
-                msg = await websocket.receive_text()
-                try:
-                    payload = json.loads(msg)
-                except json.JSONDecodeError:
-                    continue
+                message = await websocket.receive()
+                if "text" in message and message["text"]:
+                    try:
+                        payload = json.loads(message["text"])
+                    except json.JSONDecodeError:
+                        continue
 
-                if "realtimeInput" in payload and "audio" in payload["realtimeInput"]:
-                    base64_audio = payload["realtimeInput"]["audio"]
+                    if "realtimeInput" in payload and "audio" in payload["realtimeInput"]:
+                        base64_audio = payload["realtimeInput"]["audio"]
+                        metrics = telemetry.record_client_chunk(base64_audio)
+                        await gecx_client.send_audio_chunk(base64_audio)
+                        if metrics["seq"] % 10 == 0:
+                            await websocket.send_json({"telemetry": metrics})
+                elif "bytes" in message and message["bytes"]:
+                    import base64
+                    raw_bytes = message["bytes"]
+                    base64_audio = base64.b64encode(raw_bytes).decode("utf-8")
                     metrics = telemetry.record_client_chunk(base64_audio)
-                    
-                    # Forward to GECX
                     await gecx_client.send_audio_chunk(base64_audio)
-                    
-                    # Optionally send metric pulse back to client every 10 chunks (0.5s)
                     if metrics["seq"] % 10 == 0:
-                        await websocket.send_json({
-                            "telemetry": metrics
-                        })
+                        await websocket.send_json({"telemetry": metrics})
+                elif message.get("type") == "websocket.disconnect":
+                    break
         except WebSocketDisconnect:
             logger.info("client_disconnected_cleanly", session_id=session_id)
         except Exception as e:

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Download, Copy, Check, X, ShieldAlert, FileText } from 'lucide-react';
 import { RcaReport } from '../types';
 
@@ -9,6 +9,16 @@ interface RcaModalProps {
 
 export const RcaModal: React.FC<RcaModalProps> = ({ report, onClose }) => {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!report) return null;
 
@@ -67,8 +77,14 @@ export const RcaModal: React.FC<RcaModalProps> = ({ report, onClose }) => {
   const hypothesis = getRcaHypothesisMapping();
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl rounded-xl bg-zinc-950 border border-borderLine shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl rounded-xl bg-zinc-950 border border-borderLine shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      >
         {/* Modal Header */}
         <div className="px-6 py-4 bg-zinc-900/80 border-b border-borderLine flex items-center justify-between">
           <div className="flex items-center gap-2.5">
