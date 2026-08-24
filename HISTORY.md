@@ -17,12 +17,16 @@
 | **08-24 09:14 ~ 09:18** | **React 프론트엔드 구축** | • `web/src/audio/`: Web Audio Worklet 16kHz PCM 다운샘플링 & Barge-in 오디오 재생 큐 구현<br>• `web/src/components/`: Canvas 2D 60FPS 오실로스코프, 실시간 STT 대화창, 프레임 인스펙터, RCA 진단 모달<br>• Vite + Tailwind CSS 프로덕션 빌드 완료 (`web/dist/`) |
 | **08-24 09:18 ~ 09:20** | **테스트 및 스크립트 작성** | • `tests/mock_gecx_server.py`: 90초/120초 단절 시뮬레이션 Mock 서버 구축<br>• 단위 및 통합 테스트 11건 100% 통과 (`test_audio`, `test_auth`, `test_telemetry`, `test_mock_stream`)<br>• 운영 스크립트 6종 작성 (`setup_env.sh`, `run_local.sh`, `deploy_cloudrun.sh`, `deploy_gateway.sh`, `stress_test_10m.py`, `cleanup.sh`) |
 | **08-24 10:10 ~ 10:33** | **GCP 클라우드 실제 배포 완수** | • **Cloud Run BFF 배포 완료**: `https://gecx-streaming-bff-cwljmdzpfa-uc.a.run.app` (`gecx-bff-sa` IAM 권한 바인딩)<br>• **API Gateway Ingress 배포 완료**: `https://gecx-agent-gateway-47lgs0mq.uc.gateway.dev`<br>• **Live End-to-End 검증 완료**: `POST /api/v1/session/start` 세션 발급 정상 응답 확인 |
+| **08-24 10:35 ~ 10:50** | **10개 시나리오 5분 음성 벤치마크 완수** | • **5분 음성 데이터셋 10종 생성**: `tests/audio_dataset/` (16kHz Mono LINEAR16, 각 9.16MB/300초)<br>• **자동화 벤치마크 러너 구축**: `scripts/run_dataset_benchmark.py`<br>• **실환경 5분 전수 스트리밍 완수**: 6,000개 50ms 청크 무손실 실시간 전송 검증 완료 |
 
 ---
 
 ## 📌 주요 체크포인트 요약
 
-1. **실제 GCP 클라우드 배포 완료 (Live GCP Deployed)**:
+1. **실제 GCP 5분 연속 음성 스트리밍 검증 (Live 5-Min Benchmark)**:
+   * 10개 5분 오디오 데이터셋 (`tests/audio_dataset/scenario_01~10.wav`) 구축 완료.
+   * 실환경에서 **300초(6,000개 50ms 청크, 9.16 MB)** 전수 스트리밍 완벽 전송 검증.
+2. **실제 GCP 클라우드 배포 완료 (Live GCP Deployed)**:
    * **공개 Ingress API Gateway**: `https://gecx-agent-gateway-47lgs0mq.uc.gateway.dev`
    * **비공개 Cloud Run BFF**: `https://gecx-streaming-bff-cwljmdzpfa-uc.a.run.app`
    * **세션 시작 API**: `https://gecx-agent-gateway-47lgs0mq.uc.gateway.dev/api/v1/session/start` (JWT 60s TTL 발급 검증 완료)
