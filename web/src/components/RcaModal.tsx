@@ -79,109 +79,109 @@ export const RcaModal: React.FC<RcaModalProps> = ({ report, onClose }) => {
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-xl bg-zinc-950 border border-borderLine shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-zinc-900/80 border-b border-borderLine flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-lg ${isAbnormal1006 ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}`}>
-              <AlertTriangle className="w-5 h-5" />
+        <div className="px-6 py-5 bg-gradient-to-r from-rose-50/80 via-amber-50/40 to-white border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl ${isAbnormal1006 ? 'bg-rose-100 text-rose-600 ring-2 ring-rose-200' : 'bg-amber-100 text-amber-600 ring-2 ring-amber-200'}`}>
+              <AlertTriangle className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-zinc-100 font-sans">
+              <h2 className="text-base font-bold text-slate-900 font-sans">
                 소켓 세션 단절 원인 분석 리포트 (RCA Report)
               </h2>
-              <p className="text-xs text-zinc-400 font-mono">
-                RFC 6455 Close Code: {closeCode} ({report.socket_close_info.close_code_name})
+              <p className="text-xs text-slate-500 font-mono font-medium mt-0.5">
+                RFC 6455 Close Code: <strong className="text-rose-600 font-bold">{closeCode}</strong> ({report.socket_close_info.close_code_name})
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Content */}
         <div className="p-6 overflow-y-auto space-y-5 text-sm">
-          {/* Key Metrics Grid */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-zinc-900/60 border border-zinc-800 p-3">
-              <span className="text-[11px] font-mono text-zinc-400 block mb-1">세션 지속 시간</span>
-              <span className="text-lg font-mono font-bold text-rose-400">
+          {/* Key Metrics Grid (Colorful 3 Cards) */}
+          <div className="grid grid-cols-3 gap-3.5">
+            <div className="rounded-2xl bg-rose-50/70 border border-rose-200/80 p-3.5 shadow-2xs">
+              <span className="text-[11px] font-mono font-bold text-rose-700 block mb-1">세션 지속 시간</span>
+              <span className="text-xl font-mono font-extrabold text-rose-600">
                 {report.elapsed_session_sec.toFixed(2)}초
               </span>
             </div>
-            <div className="rounded-lg bg-zinc-900/60 border border-zinc-800 p-3">
-              <span className="text-[11px] font-mono text-zinc-400 block mb-1">총 전송 청크 (TX)</span>
-              <span className="text-lg font-mono font-bold text-zinc-100">
+            <div className="rounded-2xl bg-indigo-50/70 border border-indigo-200/80 p-3.5 shadow-2xs">
+              <span className="text-[11px] font-mono font-bold text-indigo-700 block mb-1">총 전송 청크 (TX)</span>
+              <span className="text-xl font-mono font-extrabold text-slate-900">
                 {report.payload_metrics.total_audio_chunks_sent}개
               </span>
             </div>
-            <div className="rounded-lg bg-zinc-900/60 border border-zinc-800 p-3">
-              <span className="text-[11px] font-mono text-zinc-400 block mb-1">마지막 오디오 레벨</span>
-              <span className="text-lg font-mono font-bold text-zinc-100">
+            <div className="rounded-2xl bg-emerald-50/70 border border-emerald-200/80 p-3.5 shadow-2xs">
+              <span className="text-[11px] font-mono font-bold text-emerald-700 block mb-1">마지막 오디오 레벨</span>
+              <span className="text-xl font-mono font-extrabold text-slate-900">
                 {report.payload_metrics.mean_audio_rms_db.toFixed(1)} dBFS
               </span>
             </div>
           </div>
 
           {/* Diagnostic Hypothesis Box */}
-          <div className="rounded-lg bg-zinc-900/40 border border-zinc-800 p-4 space-y-2">
-            <div className="flex items-center gap-2 text-rose-400 font-mono text-xs font-semibold">
-              <ShieldAlert className="w-4 h-4" />
+          <div className="rounded-2xl bg-slate-50 border border-slate-200/90 p-4 space-y-2.5">
+            <div className="flex items-center gap-2 text-rose-600 font-mono text-xs font-bold">
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
               <span>진단 가설: {hypothesis.id} - {hypothesis.title}</span>
             </div>
-            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+            <p className="text-xs text-slate-700 leading-relaxed font-medium">
               {hypothesis.description}
             </p>
-            <div className="pt-2 border-t border-zinc-800 text-xs text-zinc-400 font-mono">
-              <span className="text-emerald-400 font-semibold">권장 대책: </span>
-              {hypothesis.mitigation}
+            <div className="pt-2 border-t border-slate-200 text-xs font-mono">
+              <span className="text-emerald-700 font-bold">권장 대책: </span>
+              <span className="text-slate-600">{hypothesis.mitigation}</span>
             </div>
           </div>
 
           {/* Technical Diagnostics */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" />
+              <span className="text-xs font-mono font-bold text-slate-700 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-indigo-600" />
                 Raw Diagnostic JSON Payloads
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyJson}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-zinc-100 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-mono font-semibold text-slate-700 transition"
                 >
-                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? '복사됨' : 'JSON 복사'}</span>
                 </button>
                 <button
                   onClick={handleDownloadJson}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-400 hover:bg-emerald-500/20 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-mono font-bold text-white shadow-xs transition"
                 >
-                  <Download className="w-3 h-3" />
+                  <Download className="w-3.5 h-3.5" />
                   <span>다운로드</span>
                 </button>
               </div>
             </div>
-            <pre className="p-3 rounded-lg bg-zinc-900 text-zinc-300 text-xs font-mono overflow-x-auto max-h-40 border border-zinc-800">
+            <pre className="p-3.5 rounded-xl bg-slate-900 text-emerald-400 text-xs font-mono overflow-x-auto max-h-40 border border-slate-800 leading-relaxed shadow-inner">
               {JSON.stringify(report, null, 2)}
             </pre>
           </div>
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3 bg-zinc-900/60 border-t border-borderLine flex items-center justify-end">
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono font-medium transition"
+            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-mono font-bold transition shadow-xs"
           >
             닫기 (Close)
           </button>

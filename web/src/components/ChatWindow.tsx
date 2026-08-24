@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Bot, User, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Bot, User, Sparkles, CheckCircle2, MessageSquare } from 'lucide-react';
 import { ChatMessage } from '../types';
 
 interface ChatWindowProps {
@@ -20,27 +20,32 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [messages, currentTranscript]);
 
   return (
-    <div className="flex-1 flex flex-col rounded-lg bg-zinc-950 border border-borderLine overflow-hidden">
+    <div className="flex-1 flex flex-col rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-soft">
       {/* Dialogue Header */}
-      <div className="px-4 py-2.5 bg-zinc-900/60 border-b border-borderLine flex items-center justify-between text-xs font-mono">
-        <div className="flex items-center gap-2 text-zinc-300">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+      <div className="px-4 py-3 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-sky-50/40 border-b border-slate-200 flex items-center justify-between text-xs font-mono">
+        <div className="flex items-center gap-2 text-slate-800 font-bold">
+          <div className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5" />
+          </div>
           <span>REAL-TIME MULTIMODAL DIALOGUE</span>
         </div>
-        <span className="text-[11px] text-zinc-400">
+        <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-emerald-500 animate-ping' : 'bg-slate-300'}`} />
           Audio-to-Audio (A2A) · {isStreaming ? 'LISTENING' : 'IDLE'}
         </span>
       </div>
 
       {/* Messages List */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/40">
         {messages.length === 0 && !currentTranscript && (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-400">
-            <Bot className="w-8 h-8 mb-2 text-zinc-600 stroke-[1.5]" />
-            <p className="text-sm font-medium text-zinc-300">세션이 대기 중입니다</p>
-            <p className="text-xs text-zinc-400 mt-1 max-w-sm">
-              하단의 <span className="text-emerald-400 font-mono">[START STREAMING]</span> 버튼을 누르거나
-              <span className="text-zinc-300 font-mono"> Spacebar</span>를 눌러 음성 대화를 시작하세요.
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 mb-3 shadow-2xs">
+              <MessageSquare className="w-6 h-6 stroke-[1.75]" />
+            </div>
+            <p className="text-sm font-bold text-slate-800">음성 대화 세션 대기 중</p>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm">
+              하단의 <span className="text-emerald-600 font-bold font-mono">[START STREAMING]</span> 버튼을 누르거나
+              <span className="text-indigo-600 font-bold font-mono"> Spacebar</span>를 눌러 상담을 시작하세요.
             </p>
           </div>
         )}
@@ -53,27 +58,43 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               {!isUser && (
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                  <Bot className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <Bot className="w-4 h-4 drop-shadow-xs" />
                 </div>
               )}
 
               <div
-                className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${
+                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm shadow-xs ${
                   isUser
-                    ? 'bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-tr-sm'
-                    : 'bg-zinc-900 text-zinc-100 border border-borderLine rounded-tl-sm'
+                    ? 'bg-gradient-to-br from-indigo-500 to-sky-600 text-white rounded-tr-xs shadow-colorful-indigo'
+                    : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs shadow-soft'
                 }`}
               >
                 <div className="flex items-center justify-between gap-3 mb-1">
-                  <span className="text-[10px] font-mono font-medium uppercase text-zinc-400">
+                  <span
+                    className={`text-[10px] font-mono font-bold uppercase ${
+                      isUser ? 'text-indigo-100' : 'text-emerald-700'
+                    }`}
+                  >
                     {isUser ? 'User (Voice Ingest)' : 'GECX Agent (A2A Voice)'}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-400">{msg.timestamp}</span>
+                  <span
+                    className={`text-[10px] font-mono ${
+                      isUser ? 'text-indigo-200' : 'text-slate-400'
+                    }`}
+                  >
+                    {msg.timestamp}
+                  </span>
                 </div>
-                <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                <p className={`leading-relaxed whitespace-pre-wrap ${isUser ? 'text-white' : 'text-slate-800'}`}>
+                  {msg.text}
+                </p>
                 {msg.latencyMs && (
-                  <div className="mt-1.5 flex items-center gap-1 text-[10px] font-mono text-emerald-400">
+                  <div
+                    className={`mt-2 flex items-center gap-1 text-[10px] font-mono font-semibold ${
+                      isUser ? 'text-indigo-200' : 'text-emerald-600'
+                    }`}
+                  >
                     <CheckCircle2 className="w-3 h-3" />
                     <span>Response Latency: {msg.latencyMs.toFixed(1)}ms</span>
                   </div>
@@ -81,8 +102,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
 
               {isUser && (
-                <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shrink-0">
-                  <User className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <User className="w-4 h-4 drop-shadow-xs" />
                 </div>
               )}
             </div>
@@ -92,16 +113,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         {/* Live Streaming User Speech Ingest */}
         {currentTranscript && (
           <div className="flex gap-3 justify-end">
-            <div className="max-w-[80%] rounded-xl px-4 py-2.5 text-sm bg-zinc-800/80 text-zinc-200 border border-emerald-500/40 rounded-tr-sm animate-pulse">
+            <div className="max-w-[82%] rounded-2xl px-4 py-3 text-sm bg-gradient-to-br from-indigo-50 to-sky-50 text-indigo-900 border-2 border-indigo-400 rounded-tr-xs shadow-soft animate-pulse">
               <div className="flex items-center justify-between gap-3 mb-1">
-                <span className="text-[10px] font-mono font-medium text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-[10px] font-mono font-extrabold text-indigo-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
                   REAL-TIME STT (RECOGNIZING)
                 </span>
               </div>
-              <p className="leading-relaxed">{currentTranscript}</p>
+              <p className="leading-relaxed font-medium">{currentTranscript}</p>
             </div>
-            <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0 ring-2 ring-indigo-300">
               <User className="w-4 h-4" />
             </div>
           </div>

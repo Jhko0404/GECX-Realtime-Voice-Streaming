@@ -19,73 +19,85 @@ export const TelemetryStrip: React.FC<TelemetryStripProps> = ({
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 select-none">
-      {/* Card 1: Chunks Sent & Data Rate */}
-      <div className="rounded-lg bg-zinc-950 border border-borderLine p-3">
-        <div className="flex items-center justify-between text-zinc-400 mb-1">
-          <span className="text-[11px] font-mono uppercase">Audio Chunks (TX)</span>
-          <Radio className="w-3.5 h-3.5 text-emerald-400" />
+      {/* Card 1: Chunks Sent & Data Rate (Vibrant Indigo) */}
+      <div className="rounded-2xl bg-gradient-to-br from-white via-indigo-50/30 to-indigo-50/70 border border-indigo-200/80 p-3.5 shadow-soft flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-mono font-bold text-indigo-700 uppercase">Audio Chunks (TX)</span>
+          <div className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <Radio className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-mono font-bold text-zinc-100">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl font-mono font-extrabold text-slate-900">
             {metric ? metric.seq : 0}
           </span>
-          <span className="text-xs font-mono text-zinc-400">
+          <span className="text-xs font-mono font-semibold text-indigo-600">
             ({formatBytes(metric ? metric.bytes_sent : 0)})
           </span>
         </div>
-        <p className="text-[10px] font-mono text-zinc-400 mt-1">
-          Target: 20 chunks/sec (50ms)
+        <p className="text-[10px] font-mono text-slate-500 mt-1">
+          Target: <strong className="text-indigo-600">20 chunks/s (50ms)</strong>
         </p>
       </div>
 
-      {/* Card 2: Packet Cadence Interval */}
-      <div className="rounded-lg bg-zinc-950 border border-borderLine p-3">
-        <div className="flex items-center justify-between text-zinc-400 mb-1">
-          <span className="text-[11px] font-mono uppercase">Cadence Interval</span>
-          <Gauge className="w-3.5 h-3.5 text-emerald-400" />
+      {/* Card 2: Packet Cadence Interval (Vibrant Sky/Cyan) */}
+      <div className="rounded-2xl bg-gradient-to-br from-white via-sky-50/30 to-sky-50/70 border border-sky-200/80 p-3.5 shadow-soft flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-mono font-bold text-sky-700 uppercase">Cadence Interval</span>
+          <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
+            <Gauge className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-mono font-bold text-zinc-100">
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-mono font-extrabold text-slate-900">
             {metric ? `${metric.chunk_interval_ms.toFixed(1)}` : '0.0'}
           </span>
-          <span className="text-xs font-mono text-zinc-400">ms</span>
+          <span className="text-xs font-mono font-semibold text-sky-600">ms</span>
         </div>
-        <p className="text-[10px] font-mono text-zinc-400 mt-1">
-          Jitter: {metric && metric.chunk_interval_ms > 0 ? `±${Math.abs(metric.chunk_interval_ms - 50).toFixed(1)}ms` : '0ms'}
+        <p className="text-[10px] font-mono text-slate-500 mt-1">
+          Jitter: <strong className="text-sky-600">{metric && metric.chunk_interval_ms > 0 ? `±${Math.abs(metric.chunk_interval_ms - 50).toFixed(1)}ms` : '0ms'}</strong>
         </p>
       </div>
 
-      {/* Card 3: Audio RMS dBFS */}
-      <div className="rounded-lg bg-zinc-950 border border-borderLine p-3">
-        <div className="flex items-center justify-between text-zinc-400 mb-1">
-          <span className="text-[11px] font-mono uppercase">Audio RMS Level</span>
-          <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+      {/* Card 3: Audio RMS dBFS (Vibrant Emerald) */}
+      <div className="rounded-2xl bg-gradient-to-br from-white via-emerald-50/30 to-emerald-50/70 border border-emerald-200/80 p-3.5 shadow-soft flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-mono font-bold text-emerald-700 uppercase">Audio RMS Level</span>
+          <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <Volume2 className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className={`text-xl font-mono font-bold ${metric && metric.rms_db > -45 ? 'text-emerald-400' : 'text-zinc-100'}`}>
+        <div className="flex items-baseline gap-1">
+          <span
+            className={`text-2xl font-mono font-extrabold ${
+              metric && metric.rms_db > -45 ? 'text-emerald-600' : 'text-slate-900'
+            }`}
+          >
             {metric ? `${metric.rms_db.toFixed(1)}` : '-∞'}
           </span>
-          <span className="text-xs font-mono text-zinc-400">dBFS</span>
+          <span className="text-xs font-mono font-semibold text-emerald-600">dBFS</span>
         </div>
-        <p className="text-[10px] font-mono text-zinc-400 mt-1">
-          {metric && metric.rms_db > -45 ? 'Voice Active' : 'Silence / Noise Floor'}
+        <p className="text-[10px] font-mono text-slate-500 mt-1">
+          State: <strong className={metric && metric.rms_db > -45 ? 'text-emerald-700' : 'text-slate-500'}>{metric && metric.rms_db > -45 ? 'Active Speech' : 'Silence Floor'}</strong>
         </p>
       </div>
 
-      {/* Card 4: Silence Duration & Total Frames */}
-      <div className="rounded-lg bg-zinc-950 border border-borderLine p-3">
-        <div className="flex items-center justify-between text-zinc-400 mb-1">
-          <span className="text-[11px] font-mono uppercase">Silence Timer</span>
-          <Moon className="w-3.5 h-3.5 text-amber-400" />
+      {/* Card 4: Silence Duration & Total Frames (Vibrant Amber/Rose) */}
+      <div className="rounded-2xl bg-gradient-to-br from-white via-amber-50/30 to-amber-50/70 border border-amber-200/80 p-3.5 shadow-soft flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-mono font-bold text-amber-700 uppercase">Silence Timer</span>
+          <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+            <Moon className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-mono font-bold text-amber-400">
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-mono font-extrabold text-amber-600">
             {metric ? `${metric.silence_sec.toFixed(1)}` : '0.0'}
           </span>
-          <span className="text-xs font-mono text-zinc-400">sec</span>
+          <span className="text-xs font-mono font-semibold text-amber-700">sec</span>
         </div>
-        <p className="text-[10px] font-mono text-zinc-400 mt-1">
-          Total WS Frames: {totalFrames}
+        <p className="text-[10px] font-mono text-slate-500 mt-1">
+          Total WS Frames: <strong className="text-amber-700">{totalFrames}</strong>
         </p>
       </div>
     </div>

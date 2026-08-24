@@ -190,7 +190,15 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas text-zinc-100 flex flex-col antialiased">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col antialiased relative selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Soft Ambient Chromatic Background Orbs (Non-intrusive vibrant lighting) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="absolute top-1/4 -right-32 w-96 h-96 rounded-full bg-indigo-200/35 blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-emerald-200/35 blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-rose-200/30 blur-3xl" />
+      </div>
+
       {/* 1. Header */}
       <Header
         connectionState={connectionState}
@@ -199,8 +207,8 @@ export const App: React.FC = () => {
       />
 
       {/* 2. Main 2-Column Split Cockpit Layout */}
-      <main className="flex-1 p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 max-w-[1700px] w-full mx-auto">
-        {/* Left Column: Conversational & Audio Stream (45% -> 5.5 cols) */}
+      <main className="flex-1 p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 max-w-[1700px] w-full mx-auto relative z-10">
+        {/* Left Column: Conversational & Audio Stream (45% -> 5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-4 h-[calc(100vh-6.5rem)]">
           {/* Canvas 2D Live Oscilloscope */}
           <Visualizer
