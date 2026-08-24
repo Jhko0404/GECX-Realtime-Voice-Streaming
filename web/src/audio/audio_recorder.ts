@@ -8,6 +8,18 @@ export class AudioRecorder {
   private pauseTimeout: any = null;
   public isRecording: boolean = false;
 
+  public static calculateRmsDb(int16Array: Int16Array): number {
+    if (int16Array.length === 0) return -100.0;
+    let sum = 0;
+    for (let i = 0; i < int16Array.length; i++) {
+      const norm = int16Array[i] / 32768.0;
+      sum += norm * norm;
+    }
+    const rms = Math.sqrt(sum / int16Array.length);
+    if (rms <= 1e-6) return -100.0;
+    return Math.max(-100.0, Math.min(0.0, 20 * Math.log10(rms)));
+  }
+
   async start(onChunk: (base64Audio: string, rawInt16: Int16Array) => void): Promise<void> {
     this.onChunkCallback = onChunk;
     this.isTemporarilyPaused = false;

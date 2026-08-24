@@ -21,6 +21,7 @@ export const App: React.FC = () => {
   const [audioData, setAudioData] = useState<Int16Array | null>(null);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [isBargeIn, setIsBargeIn] = useState<boolean>(false);
+  const [bargeInGuard, setBargeInGuard] = useState<boolean>(true);
   const [rmsDb, setRmsDb] = useState<number>(-100);
   const [latestMetric, setLatestMetric] = useState<TelemetryMetric | null>(null);
   const [totalFramesCount, setTotalFramesCount] = useState<number>(0);
@@ -41,6 +42,12 @@ export const App: React.FC = () => {
   const wsServiceRef = useRef<StreamingWebSocketService | null>(null);
   const timerRef = useRef<any>(null);
   const currentTranscriptRef = useRef<string>('');
+  const bargeInGuardRef = useRef<boolean>(true);
+
+  // Sync ref with state
+  useEffect(() => {
+    bargeInGuardRef.current = bargeInGuard;
+  }, [bargeInGuard]);
 
   const addLog = (level: LogEntry['level'], tag: string, message: string) => {
     setLogs((prev) => [
@@ -100,9 +107,28 @@ export const App: React.FC = () => {
           setIsStreaming(true);
           addLog('SUCCESS', 'GECX', `BidiRunSession upstream ready (session: ${newSessionId})`);
 
-          // Start microphone audio recording
+          // Start microphone audio recording with Smart Barge-In Guard
           recorderRef.current?.start((base64Audio, rawInt16) => {
             setAudioData(rawInt16);
+
+            const isAgentSpeaking = playerRef.current?.isPlaying() ?? false;
+            const chunkDb = AudioRecorder.calculateRmsDb(rawInt16);
+
+            // Smart Barge-In Guard: Echo Gate & Code 1007 Turn Conflict Defense
+            if (bargeInGuardRef.current && isAgentSpeaking) {
+              if (chunkDb < -35) {
+                // Speaker audio leakage/ambient floor: gate chunk to protect GECX CES turn state machine
+                return;
+              } else {
+                // Deliberate user interruption: Flush audio playback and apply 150ms temporal gap
+                playerRef.current?.flush();
+                recorderRef.current?.pauseTemporarily(150);
+                setIsBargeIn(true);
+                addLog('WARN', 'BARGE-IN', 'Barge-In detected: Flushed agent audio playback and created 150ms temporal gap.');
+                setTimeout(() => setIsBargeIn(false), 800);
+                return;
+              }
+            }
             wsServiceRef.current?.sendAudioChunk(base64Audio);
           });
           addLog('AUDIO', 'MIC', 'Microphone active (16kHz 16-bit Mono Linear16, 50ms chunk interval)');
@@ -246,6 +272,22 @@ export const App: React.FC = () => {
       // Resume mic streaming
       recorderRef.current?.start((base64Audio, rawInt16) => {
         setAudioData(rawInt16);
+
+        const isAgentSpeaking = playerRef.current?.isPlaying() ?? false;
+        const chunkDb = AudioRecorder.calculateRmsDb(rawInt16);
+
+        if (bargeInGuardRef.current && isAgentSpeaking) {
+          if (chunkDb < -35) {
+            return;
+          } else {
+            playerRef.current?.flush();
+            recorderRef.current?.pauseTemporarily(150);
+            setIsBargeIn(true);
+            addLog('WARN', 'BARGE-IN', 'Barge-In detected: Flushed agent audio playback and created 150ms temporal gap.');
+            setTimeout(() => setIsBargeIn(false), 800);
+            return;
+          }
+        }
         wsServiceRef.current?.sendAudioChunk(base64Audio);
       });
       setIsStreaming(true);
@@ -307,8 +349,10 @@ export const App: React.FC = () => {
             <ControlDeck
               connectionState={connectionState}
               isStreaming={isStreaming}
+              bargeInGuard={bargeInGuard}
               onToggleStreaming={handleToggleStreaming}
               onEndSession={handleEndSession}
+              onToggleBargeInGuard={() => setBargeInGuard((prev) => !prev)}
             />
 
             {/* Google Cloud Session Infrastructure Card */}

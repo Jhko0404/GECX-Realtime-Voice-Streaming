@@ -82,6 +82,14 @@ export class AudioPlayer {
     }
   }
 
+  /**
+   * Checks if the agent audio is actively playing or queued in buffer.
+   */
+  isPlaying(): boolean {
+    if (!this.audioContext) return false;
+    return this.activeSources.length > 0 && this.nextStartTime > this.audioContext.currentTime;
+  }
+
   close() {
     this.flush();
     if (this.audioContext) {
@@ -90,3 +98,4 @@ export class AudioPlayer {
     }
   }
 }
+
