@@ -26,3 +26,5 @@ rca_report_*.json
 .DS_Store
 Thumbs.db
 benchmark_results_*.json
+*.wav
+*.mp3
