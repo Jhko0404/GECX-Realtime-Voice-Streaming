@@ -186,6 +186,7 @@ python3 scripts/stress_test_10m.py http://localhost:8080 600
 
 * [System Design Document (SDD)](docs/sdd.md) - 전체 아키텍처 다이어그램 및 엔드투엔드 시퀀스
 * [Technical Design Document (TDD)](docs/tdd.md) - 마이크로초 텔레메트리 및 RCA 진단 알고리즘
+* [Resource Map (전체 리소스 총괄 맵)](docs/resource_map.md) - 인프라, IAM, API, 데이터셋, 스크립트 단일 뷰
 * [Troubleshooting & Resolution Guide](docs/troubleshooting.md) - 실환경 배포 및 연동 트러블슈팅 7대 항목
 * [GECX BidiRunSession API Guide](docs/BidiRunSession.md) - 실시간 스트리밍 gRPC/WebSocket 프로토콜 명세
 * [Project History & Timeline](HISTORY.md) - 단계별 개발 및 배포 이력
