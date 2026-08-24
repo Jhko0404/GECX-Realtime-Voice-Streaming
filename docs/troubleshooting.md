@@ -144,6 +144,20 @@
   2. **RFC 6455 텔레메트리 & RCA 진단 체계 구축**: [`bff/telemetry.py`](../bff/telemetry.py)를 통해 80~120초 구간 단절 시 `GECX_80_120S_TIMEOUT`으로 즉각 분류하고 복구 가이드를 제공하는 진단 모달 연동.
   3. **실환경 5분 스트리밍 실증**: 10종의 5분(300초 / 6,000 청크) 합성 음성 데이터셋으로 벤치마크를 수행하여 무손실 연속 스트리밍 검증 완료.
 
+### 🚨 Issue 5.2: API Gateway WebSocket 업그레이드 미지원 및 Data Plane 직접 라우팅
+* **증상**: 브라우저에서 게이트웨이 도메인(`https://gecx-agent-gateway-47lgs0mq.uc.gateway.dev/`) 접속 후 세션 연결 시 즉시 `RFC 6455 Close Code 1006` 단절 발생.
+* **원인 (Root Cause)**:
+  * Google Cloud API Gateway는 REST/HTTP 프록시 전용으로 동작하며, 양방향 스트리밍 프로토콜인 WebSocket (`Upgrade: websocket`)을 지원하지 않음.
+  * 프론트엔드가 게이트웨이 호스트로 WebSocket 연결을 시도하면서 게이트웨이 레이어에서 연결이 즉각 강제 종료됨.
+* **해결 방법 (Solution)**:
+  1. **Control Plane과 Data Plane 엔드포인트 분리**:
+     * Control Plane (`POST /api/v1/session/start`)은 보안 게이트웨이를 경유하여 단기 서명된 JWT 티켓 발급.
+     * 발급 응답 시 `ws_endpoint`로 Cloud Run의 WSS URL(`wss://gecx-streaming-bff-cwljmdzpfa-uc.a.run.app/ws/stream`)을 반환.
+  2. **프론트엔드 라우팅 자동화**:
+     * [`web/src/services/websocket.ts`](../web/src/services/websocket.ts)에서 `gateway.dev` 도메인 감지 시 Cloud Run WSS 엔드포인트로 자동 라우팅.
+  3. **연속 5회 E2E 라이브 검증 및 5분 벤치마크 완수**:
+     * 실환경 게이트웨이 발급 + Cloud Run WSS 세션 5회 연속 연결 테스트 100% 성공.
+
 ---
 
 ## 📊 트러블슈팅 요약 매트릭스
@@ -157,3 +171,5 @@
 | **GECX** | 1008 Policy Violation | Service Account 권한 부족 | `dialogflow.admin` 바인딩 | API 세션 권한 획득 |
 | **GECX** | 1008 Not Found | 불일치하는 deployment ID | deployment 파라미터 옵셔널화 | 초안/라이브 자동 연동 |
 | **스트리밍**| 80~120s 침묵 단절 위험 | 무음 시 패킷 전송 중단 | 50ms Always-On + RCA 로깅 | 5분(300s) 연속 전송 성공 |
+| **네트워크**| Gateway WebSocket 1006 | API Gateway WS 미지원 | Control/Data Plane 분리 WSS 라우팅 | 5회 연속 100% E2E 검증 |
+
