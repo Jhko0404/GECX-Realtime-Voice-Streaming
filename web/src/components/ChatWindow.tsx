@@ -2,15 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Bot,
-  User,
   Sparkles,
   CheckCircle2,
-  MessageSquare,
   ExternalLink,
   FileText,
   ImageIcon,
   ArrowDown,
+  User,
 } from 'lucide-react';
 import { ChatMessage } from '../types';
 
@@ -48,7 +46,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     setShowScrollBottom(!isNearBottom);
   };
 
-  // Custom Markdown Components for Rich Citations & Images
+  // Custom Markdown Components for Rich Citations & Images (Google Grounding Style)
   const markdownComponents: any = {
     a: ({ href, children, ...props }: any) => {
       const text = String(children);
@@ -64,14 +62,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 my-2 rounded-xl bg-indigo-50/90 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 font-semibold text-xs shadow-2xs hover:shadow-xs transition-all duration-150 group break-all cursor-pointer hover:-translate-y-0.5"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 my-1.5 rounded-full bg-[#e8f0fe] hover:bg-[#d2e3fc] text-[#174ea6] border border-[#d2e3fc] font-medium text-xs shadow-2xs hover:shadow-xs transition-all duration-150 group break-all cursor-pointer"
             {...props}
           >
-            <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
-            <span className="underline decoration-indigo-300 underline-offset-2 group-hover:text-indigo-950 font-bold">
+            <FileText className="w-3.5 h-3.5 text-[#1a73e8] shrink-0" />
+            <span className="font-medium text-[#1a73e8] group-hover:text-[#174ea6]">
               {children}
             </span>
-            <ExternalLink className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 shrink-0 ml-0.5" />
+            <ExternalLink className="w-3 h-3 text-[#1a73e8] shrink-0 ml-0.5" />
           </a>
         );
       }
@@ -81,7 +79,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sky-600 hover:text-sky-800 underline decoration-sky-300 underline-offset-2 inline-flex items-center gap-0.5 font-semibold"
+          className="text-[#1a73e8] hover:text-[#174ea6] underline decoration-[#aecbfa] underline-offset-2 inline-flex items-center gap-0.5 font-medium"
           {...props}
         >
           {children}
@@ -90,7 +88,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       );
     },
     img: ({ src, alt }: any) => (
-      <div className="my-3 rounded-2xl overflow-hidden border border-slate-200/90 shadow-soft bg-white max-w-lg transition-all hover:shadow-soft-lg">
+      <div className="my-3 rounded-2xl overflow-hidden border border-[#dadce0] shadow-sm bg-white max-w-lg transition-all hover:shadow-md">
         <div className="relative group">
           <img
             src={src}
@@ -102,7 +100,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             href={src}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute top-2.5 right-2.5 p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md flex items-center gap-1.5 text-xs font-mono"
+            className="absolute top-2.5 right-2.5 p-2 rounded-full bg-[#202124]/80 hover:bg-[#202124] text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md flex items-center gap-1.5 text-xs"
             title="원본 이미지 열기"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -110,35 +108,37 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </a>
         </div>
         {alt && (
-          <div className="px-3.5 py-2 text-[11px] text-slate-600 font-mono bg-slate-50 border-t border-slate-100 flex items-center gap-1.5">
-            <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
+          <div className="px-3.5 py-2 text-[11px] text-[#5f6368] font-sans bg-[#f8f9fa] border-t border-[#dadce0] flex items-center gap-1.5">
+            <ImageIcon className="w-3.5 h-3.5 text-[#1a73e8]" />
             <span>{alt}</span>
           </div>
         )}
       </div>
     ),
-    p: ({ children }: any) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
-    ul: ({ children }: any) => <ul className="list-disc list-inside space-y-1.5 my-2 pl-1">{children}</ul>,
-    ol: ({ children }: any) => <ol className="list-decimal list-inside space-y-1.5 my-2 pl-1">{children}</ol>,
+    p: ({ children }: any) => <p className="mb-2 last:mb-0 leading-relaxed text-[#202124]">{children}</p>,
+    ul: ({ children }: any) => <ul className="list-disc list-inside space-y-1.5 my-2 pl-1 text-[#202124]">{children}</ul>,
+    ol: ({ children }: any) => <ol className="list-decimal list-inside space-y-1.5 my-2 pl-1 text-[#202124]">{children}</ol>,
     li: ({ children }: any) => <li className="leading-relaxed">{children}</li>,
-    strong: ({ children }: any) => <strong className="font-extrabold text-slate-900">{children}</strong>,
+    strong: ({ children }: any) => <strong className="font-bold text-[#202124]">{children}</strong>,
   };
 
   return (
-    <div className="flex-1 flex flex-col rounded-2xl bg-white/90 backdrop-blur-xl border border-slate-200/80 overflow-hidden shadow-soft relative h-full min-h-[440px]">
-      {/* Dialogue Header */}
-      <div className="px-5 py-3.5 bg-gradient-to-r from-slate-50 via-indigo-50/30 to-sky-50/30 border-b border-slate-200/80 flex items-center justify-between text-xs font-mono shrink-0 select-none">
-        <div className="flex items-center gap-2.5 text-slate-800 font-bold">
-          <div className="w-6 h-6 rounded-lg bg-indigo-100/80 text-indigo-600 flex items-center justify-center border border-indigo-200/60">
+    <div className="flex-1 flex flex-col rounded-2xl bg-white border border-[#dadce0] overflow-hidden shadow-sm relative h-full min-h-[440px] font-sans">
+      {/* Google Dialogue Header */}
+      <div className="px-5 py-3.5 bg-white border-b border-[#dadce0] flex items-center justify-between text-xs shrink-0 select-none">
+        <div className="flex items-center gap-2.5 text-[#202124] font-medium">
+          {/* Gemini Sparkle Icon */}
+          <div className="w-6 h-6 rounded-full bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5" />
           </div>
-          <span className="tracking-wide">REAL-TIME MULTIMODAL DIALOGUE</span>
+          <span className="text-sm font-bold text-[#202124]">GECX Multimodal Dialogue</span>
+          <span className="text-xs text-[#5f6368] font-normal hidden sm:inline">(A2A Streaming)</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono font-semibold text-slate-600 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/80 border border-slate-200/60 shadow-2xs">
+          <span className="text-[11px] font-medium text-[#3c4043] flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f1f3f4] border border-[#dadce0]">
             <span
               className={`w-2 h-2 rounded-full ${
-                isStreaming ? 'bg-emerald-500 animate-ping' : 'bg-slate-300'
+                isStreaming ? 'bg-[#1e8e3e] animate-ping' : 'bg-[#9aa0a6]'
               }`}
             />
             {isStreaming ? 'STREAMING ACTIVE' : 'STANDBY'}
@@ -150,17 +150,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 p-4 lg:p-6 overflow-y-auto space-y-4 bg-slate-50/30 scroll-smooth custom-scrollbar relative"
+        className="flex-1 p-4 lg:p-6 overflow-y-auto space-y-4 bg-[#f8fafd] scroll-smooth custom-scrollbar relative"
       >
         {messages.length === 0 && !currentTranscript && (
-          <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center p-6 text-slate-400">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-sky-50 border border-indigo-100/80 flex items-center justify-center text-indigo-500 mb-3.5 shadow-soft">
-              <MessageSquare className="w-7 h-7 stroke-[1.75]" />
+          <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center p-6 text-[#5f6368]">
+            {/* Google Gemini Sparkle Welcome */}
+            <div className="w-14 h-14 rounded-2xl bg-[#e8f0fe] border border-[#d2e3fc] flex items-center justify-center text-[#1a73e8] mb-3.5 shadow-sm">
+              <Sparkles className="w-7 h-7 stroke-[1.75]" />
             </div>
-            <p className="text-sm font-bold text-slate-800">실시간 음성 대화 세션 대기 중</p>
-            <p className="text-xs text-slate-500 mt-1.5 max-w-sm leading-relaxed">
-              좌측 하단의 <span className="text-emerald-600 font-bold font-mono">[CONNECT & START]</span> 버튼을 누르거나
-              <span className="text-indigo-600 font-bold font-mono"> Spacebar</span>를 눌러 음성 상담을 시작하세요.
+            <p className="text-sm font-bold text-[#202124]">실시간 음성 상담 세션 대기 중</p>
+            <p className="text-xs text-[#5f6368] mt-1.5 max-w-sm leading-relaxed">
+              좌측 하단의 <span className="text-[#1a73e8] font-bold">[CONNECT & START]</span> 버튼을 누르거나
+              <span className="text-[#1a73e8] font-bold"> Spacebar</span>를 눌러 Google Voice Agent와 실시간 대화를 시작하세요.
             </p>
           </div>
         )}
@@ -173,29 +174,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               {!isUser && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0 mt-1">
-                  <Bot className="w-4 h-4 drop-shadow-xs" />
+                <div className="w-8 h-8 rounded-full bg-white border border-[#dadce0] text-[#1a73e8] flex items-center justify-center shadow-2xs shrink-0 mt-1">
+                  <Sparkles className="w-4 h-4 text-[#1a73e8]" />
                 </div>
               )}
 
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm transition-all ${
+                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm transition-all ${
                   isUser
-                    ? 'bg-gradient-to-br from-indigo-600 via-indigo-600 to-blue-600 text-white rounded-tr-xs shadow-colorful-indigo'
-                    : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs shadow-soft hover:shadow-soft-lg'
+                    ? 'bg-[#1a73e8] text-white rounded-tr-xs shadow-sm'
+                    : 'bg-white text-[#202124] border border-[#dadce0] rounded-tl-xs shadow-sm'
                 }`}
               >
-                <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-white/10 dark:border-slate-100">
+                <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-black/5 dark:border-white/10">
                   <span
-                    className={`text-[10px] font-mono font-extrabold uppercase tracking-wide ${
-                      isUser ? 'text-indigo-100' : 'text-emerald-700'
+                    className={`text-[11px] font-medium tracking-wide ${
+                      isUser ? 'text-[#d2e3fc]' : 'text-[#1a73e8]'
                     }`}
                   >
-                    {isUser ? 'User (Voice Ingest)' : 'GECX Agent (A2A Voice)'}
+                    {isUser ? 'You (Voice Ingest)' : 'GECX Agent (A2A Voice)'}
                   </span>
                   <span
                     className={`text-[10px] font-mono ${
-                      isUser ? 'text-indigo-200' : 'text-slate-400'
+                      isUser ? 'text-[#d2e3fc]' : 'text-[#5f6368]'
                     }`}
                   >
                     {msg.timestamp}
@@ -205,7 +206,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 {isUser ? (
                   <p className="leading-relaxed whitespace-pre-wrap text-white font-medium">{msg.text}</p>
                 ) : (
-                  <div className="text-slate-800 leading-relaxed text-sm">
+                  <div className="text-[#202124] leading-relaxed text-sm">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                       {msg.text}
                     </ReactMarkdown>
@@ -214,8 +215,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 {msg.latencyMs && (
                   <div
-                    className={`mt-2.5 flex items-center gap-1 text-[10px] font-mono font-semibold pt-1 border-t border-slate-100 ${
-                      isUser ? 'text-indigo-200' : 'text-emerald-600'
+                    className={`mt-2 flex items-center gap-1 text-[10px] font-mono font-medium pt-1 border-t border-[#f1f3f4] ${
+                      isUser ? 'text-[#d2e3fc]' : 'text-[#1e8e3e]'
                     }`}
                   >
                     <CheckCircle2 className="w-3 h-3" />
@@ -225,8 +226,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
 
               {isUser && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-xs shrink-0 mt-1">
-                  <User className="w-4 h-4 drop-shadow-xs" />
+                <div className="w-8 h-8 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-2xs shrink-0 mt-1">
+                  <User className="w-4 h-4" />
                 </div>
               )}
             </div>
@@ -236,16 +237,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         {/* Live Streaming User Speech Ingest */}
         {currentTranscript && (
           <div className="flex gap-3 justify-end">
-            <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm bg-gradient-to-br from-indigo-50 via-sky-50 to-white text-indigo-950 border-2 border-indigo-400/90 rounded-tr-xs shadow-soft animate-pulse">
+            <div className="max-w-[82%] rounded-2xl px-4 py-3 text-sm bg-[#e8f0fe] text-[#174ea6] border border-[#aecbfa] rounded-tr-xs shadow-sm animate-pulse">
               <div className="flex items-center justify-between gap-3 mb-1">
-                <span className="text-[10px] font-mono font-extrabold text-indigo-600 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                <span className="text-[10px] font-mono font-bold text-[#1a73e8] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#1a73e8] animate-ping" />
                   REAL-TIME STT (RECOGNIZING...)
                 </span>
               </div>
               <p className="leading-relaxed font-semibold">{currentTranscript}</p>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0 ring-2 ring-indigo-300 mt-1">
+            <div className="w-8 h-8 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-2xs shrink-0 mt-1">
               <User className="w-4 h-4" />
             </div>
           </div>
@@ -254,11 +255,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         <div ref={bottomRef} />
       </div>
 
-      {/* Floating "Scroll to Bottom" button */}
+      {/* Floating "Scroll to Bottom" button (Google Material 3 FAB style) */}
       {showScrollBottom && (
         <button
           onClick={() => scrollToBottom('smooth')}
-          className="absolute bottom-5 right-6 px-4 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-colorful-indigo flex items-center gap-1.5 transition-all duration-200 animate-bounce z-20 cursor-pointer border border-indigo-400"
+          className="absolute bottom-5 right-6 px-4 py-2 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-medium shadow-md flex items-center gap-1.5 transition-all duration-200 animate-bounce z-20 cursor-pointer"
         >
           <ArrowDown className="w-3.5 h-3.5" />
           <span>최신 대화로 이동</span>
@@ -267,4 +268,5 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     </div>
   );
 };
+
 

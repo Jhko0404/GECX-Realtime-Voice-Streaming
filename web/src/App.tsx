@@ -267,35 +267,35 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col antialiased relative selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Soft Ambient Chromatic Background Orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl" />
-        <div className="absolute top-1/4 -right-32 w-96 h-96 rounded-full bg-indigo-200/35 blur-3xl" />
-        <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-emerald-200/35 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-rose-200/30 blur-3xl" />
+    <div className="min-h-screen bg-[#f8fafd] text-[#202124] flex flex-col antialiased relative selection:bg-[#d2e3fc] selection:text-[#174ea6] font-sans">
+      {/* Soft Ambient Google 4-Color Background Orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-40">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#d2e3fc] blur-3xl" />
+        <div className="absolute top-1/4 -right-32 w-96 h-96 rounded-full bg-[#fad2cf] blur-3xl" />
+        <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-[#ceead6] blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[#feefc3] blur-3xl" />
       </div>
 
-      {/* 1. Header */}
+      {/* 1. Google Cloud Style Header */}
       <Header
         connectionState={connectionState}
         sessionId={sessionId}
         durationSec={durationSec}
       />
 
-      {/* 2. Main High-End Cockpit Layout */}
-      <main className="flex-1 p-4 lg:p-6 flex flex-col gap-5 max-w-[1500px] w-full mx-auto relative z-10">
-        {/* Top: 4-Card Vibrant Telemetry Strip */}
+      {/* 2. Main Google Cloud Cockpit Layout */}
+      <main className="flex-1 p-4 lg:p-6 flex flex-col gap-4 max-w-[1500px] w-full mx-auto relative z-10">
+        {/* Top: 4-Card Google Material 3 Telemetry Strip */}
         <TelemetryStrip
           metric={latestMetric}
           totalFrames={totalFramesCount}
         />
 
         {/* Content: 2-Column Split (Left Deck + Right Dialogue Stage) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[calc(100vh-14rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-[calc(100vh-14rem)]">
           {/* Left Column: Audio Visualizer, Controls, Spec & Diagnostic Terminal (4.5 cols / 38%) */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            {/* Live Oscilloscope & Audio VU Meter */}
+          <div className="lg:col-span-5 flex flex-col gap-3.5">
+            {/* Google Gemini Multi-Color Audio Waveform */}
             <Visualizer
               audioData={audioData}
               isStreaming={isStreaming}
@@ -311,36 +311,36 @@ export const App: React.FC = () => {
               onEndSession={handleEndSession}
             />
 
-            {/* Architecture & Protocol Badge Card */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-3.5 shadow-soft flex flex-col gap-2 text-xs font-mono">
-              <div className="flex items-center justify-between text-slate-800 font-bold">
+            {/* Google Cloud Session Infrastructure Card */}
+            <div className="rounded-2xl bg-white border border-[#dadce0] p-3.5 shadow-sm flex flex-col gap-2 text-xs font-sans">
+              <div className="flex items-center justify-between text-[#202124] font-medium">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                  <div className="w-5 h-5 rounded-full bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center">
                     <ShieldCheck className="w-3.5 h-3.5" />
                   </div>
-                  <span className="tracking-wide">SESSION INFRASTRUCTURE</span>
+                  <span className="text-xs font-bold text-[#202124]">Cloud Architecture & Protocol</span>
                 </div>
-                <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80">
-                  READY
+                <span className="text-[10px] text-[#137333] font-medium bg-[#e6f4ea] px-2.5 py-0.5 rounded-full border border-[#ceead6]">
+                  Active Serving
                 </span>
               </div>
 
-              <div className="space-y-1.5 text-slate-600 text-[11px] pt-1.5 border-t border-slate-100">
+              <div className="space-y-1.5 text-[#5f6368] text-[11px] pt-1.5 border-t border-[#f1f3f4]">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Backend Protocol:</span>
-                  <strong className="text-slate-800 font-bold">BidiRunSession (A2A)</strong>
+                  <span className="text-[#5f6368]">Backend Protocol:</span>
+                  <strong className="text-[#202124] font-medium font-mono">BidiRunSession (A2A Voice)</strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Security Auth:</span>
-                  <strong className="text-indigo-600 font-bold">JWT Ticket (TTL 60s)</strong>
+                  <span className="text-[#5f6368]">Security Auth:</span>
+                  <strong className="text-[#1a73e8] font-medium">Signed Ephemeral JWT (TTL 60s)</strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Audio Encoding:</span>
-                  <strong className="text-slate-800 font-bold">LINEAR16 · 16kHz Mono</strong>
+                  <span className="text-[#5f6368]">Audio Encoding:</span>
+                  <strong className="text-[#202124] font-medium font-mono">LINEAR16 · 16kHz Mono</strong>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Ingress Gateway:</span>
-                  <strong className="text-slate-800 font-bold">Google API Gateway</strong>
+                  <span className="text-[#5f6368]">Ingress Gateway:</span>
+                  <strong className="text-[#202124] font-medium">Google Cloud API Gateway</strong>
                 </div>
               </div>
             </div>

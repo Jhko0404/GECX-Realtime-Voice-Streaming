@@ -26,28 +26,28 @@ export const Visualizer: React.FC<VisualizerProps> = ({
     const width = canvas.width;
     const height = canvas.height;
 
-    // Pro-Audio Dark Stage Background
-    ctx.fillStyle = '#090d16';
+    // Clean Google Soft Surface
+    ctx.fillStyle = '#f8fafd';
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle Hardware Oscilloscope Phosphor Grid
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 0.75;
+    // Google Subtle Gridlines
+    ctx.strokeStyle = '#e8eaed';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     // Center baseline
     ctx.moveTo(0, height / 2);
     ctx.lineTo(width, height / 2);
     // Vertical grid ticks
-    for (let x = 0; x < width; x += 30) {
+    for (let x = 0; x < width; x += 40) {
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
     }
     ctx.stroke();
 
     if (!isStreaming || !audioData || audioData.length === 0) {
-      // Resting Ambient Glowing Wave
-      ctx.strokeStyle = '#334155';
-      ctx.lineWidth = 1.5;
+      // Idle Baseline Wave
+      ctx.strokeStyle = '#bdc1c6';
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
       ctx.lineTo(width, height / 2);
@@ -55,30 +55,34 @@ export const Visualizer: React.FC<VisualizerProps> = ({
       return;
     }
 
-    // Dynamic glowing gradient waveform based on speech energy / barge-in
+    // Google 4-Color Waveform (Blue -> Red -> Yellow -> Green)
     const gradient = ctx.createLinearGradient(0, 0, width, 0);
     if (isBargeIn) {
-      gradient.addColorStop(0, '#f59e0b');
-      gradient.addColorStop(0.5, '#ef4444');
-      gradient.addColorStop(1, '#f97316');
-      ctx.shadowColor = 'rgba(239, 68, 68, 0.7)';
-      ctx.shadowBlur = 14;
+      gradient.addColorStop(0, '#ea4335');
+      gradient.addColorStop(0.5, '#fbbc04');
+      gradient.addColorStop(1, '#d93025');
+      ctx.shadowColor = 'rgba(234, 67, 53, 0.4)';
+      ctx.shadowBlur = 10;
     } else if (rmsDb > -45) {
-      gradient.addColorStop(0, '#06b6d4');
-      gradient.addColorStop(0.5, '#10b981');
-      gradient.addColorStop(1, '#6366f1');
-      ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
-      ctx.shadowBlur = 12;
+      // Authentic Google 4-Color Waveform
+      gradient.addColorStop(0, '#4285f4'); // Google Blue
+      gradient.addColorStop(0.33, '#ea4335'); // Google Red
+      gradient.addColorStop(0.66, '#fbbc04'); // Google Yellow
+      gradient.addColorStop(1, '#34a853'); // Google Green
+      ctx.shadowColor = 'rgba(66, 133, 244, 0.35)';
+      ctx.shadowBlur = 8;
     } else {
-      gradient.addColorStop(0, '#475569');
-      gradient.addColorStop(0.5, '#38bdf8');
-      gradient.addColorStop(1, '#475569');
-      ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
-      ctx.shadowBlur = 6;
+      gradient.addColorStop(0, '#9aa0a6');
+      gradient.addColorStop(0.5, '#4285f4');
+      gradient.addColorStop(1, '#9aa0a6');
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
     }
 
     ctx.strokeStyle = gradient;
     ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.beginPath();
 
     const sliceWidth = width / audioData.length;
@@ -86,7 +90,7 @@ export const Visualizer: React.FC<VisualizerProps> = ({
 
     for (let i = 0; i < audioData.length; i++) {
       const v = audioData[i] / 32768.0;
-      const y = (v * (height * 0.82)) / 2 + height / 2;
+      const y = (v * (height * 0.85)) / 2 + height / 2;
 
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -104,81 +108,82 @@ export const Visualizer: React.FC<VisualizerProps> = ({
   const vuPercent = Math.max(0, Math.min(100, ((rmsDb + 60) / 60) * 100));
 
   return (
-    <div className="rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 p-4 shadow-soft flex flex-col gap-3">
-      {/* Top Header & Badges */}
+    <div className="rounded-2xl bg-white border border-[#dadce0] p-4 shadow-sm font-sans flex flex-col gap-3">
+      {/* Top Header & Status Chips */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
-            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
+            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
               isStreaming
                 ? rmsDb > -45
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 ring-2 ring-emerald-100'
-                  : 'bg-sky-50 text-sky-600 border border-sky-200'
-                : 'bg-slate-100 text-slate-400 border border-slate-200'
+                  ? 'bg-[#e6f4ea] text-[#1e8e3e]'
+                  : 'bg-[#e8f0fe] text-[#1a73e8]'
+                : 'bg-[#f1f3f4] text-[#5f6368]'
             }`}
           >
             {isStreaming ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
           </div>
-          <span className="text-xs font-mono font-bold text-slate-800">
+          <span className="text-xs font-medium text-[#202124]">
             {isStreaming ? (
               rmsDb > -45 ? (
-                <span className="text-emerald-700 flex items-center gap-1.5 font-extrabold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                  VOICE ACTIVE (SPEAKING)
+                <span className="text-[#137333] flex items-center gap-1.5 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-[#34a853] animate-ping" />
+                  Active Speech Detected
                 </span>
               ) : (
-                <span className="text-sky-700 font-semibold">NOISE TRACKING (STANDBY)</span>
+                <span className="text-[#1a73e8] font-medium">Ambient Noise Tracking (50ms)</span>
               )
             ) : (
-              <span className="text-slate-500 font-medium">MICROPHONE READY</span>
+              <span className="text-[#5f6368] font-normal">Microphone Ready</span>
             )}
           </span>
         </div>
 
         {isBargeIn ? (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-colorful-rose animate-bounce">
-            <Zap className="w-3.5 h-3.5 fill-current" /> BARGE-IN INTERRUPT
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf] animate-bounce">
+            <Zap className="w-3.5 h-3.5 fill-current text-[#d93025]" /> Barge-In Interrupt
           </span>
         ) : (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/80 text-slate-600 text-[11px] font-mono">
-            <Waves className="w-3 h-3 text-indigo-500" />
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f1f3f4] border border-[#dadce0] text-[#5f6368] text-[11px]">
+            <Waves className="w-3 h-3 text-[#1a73e8]" />
             <span>20Hz Oscilloscope</span>
           </div>
         )}
       </div>
 
-      {/* Hardware-styled Canvas Enclosure */}
-      <div className="relative rounded-xl overflow-hidden border border-slate-800 shadow-inner bg-[#090d16]">
+      {/* Canvas Enclosure */}
+      <div className="relative rounded-xl overflow-hidden border border-[#dadce0] bg-[#f8fafd]">
         <canvas
           ref={canvasRef}
           width={600}
-          height={100}
-          className="w-full h-[90px] block"
+          height={96}
+          className="w-full h-[88px] block"
         />
       </div>
 
-      {/* Footer Details & Real-time VU Meter */}
-      <div className="flex items-center justify-between text-xs font-mono pt-0.5">
+      {/* Footer Details & Google 4-Color VU Meter */}
+      <div className="flex items-center justify-between text-xs pt-0.5">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 text-[11px]">Level:</span>
-          <span className="font-bold text-slate-900 font-mono">
+          <span className="text-[#5f6368] text-[11px]">Level:</span>
+          <span className="font-mono font-bold text-[#202124]">
             {isStreaming ? `${rmsDb.toFixed(1)} dBFS` : '-∞ dBFS'}
           </span>
-          {/* Visual Mini VU Meter */}
+          {/* Mini VU Meter */}
           {isStreaming && (
-            <div className="w-28 h-2 rounded-full bg-slate-100 border border-slate-200/80 overflow-hidden flex">
+            <div className="w-28 h-2 rounded-full bg-[#e8eaed] overflow-hidden flex">
               <div
-                className="h-full bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-500 transition-all duration-75 rounded-full"
+                className="h-full bg-gradient-to-r from-[#4285f4] via-[#34a853] to-[#fbbc04] transition-all duration-75 rounded-full"
                 style={{ width: `${vuPercent}%` }}
               />
             </div>
           )}
         </div>
-        <span className="text-indigo-700 font-bold bg-indigo-50/80 px-2.5 py-0.5 rounded-lg text-[10px] border border-indigo-200/80">
-          LINEAR16 · 16kHz
+        <span className="text-[#1a73e8] font-medium bg-[#e8f0fe] px-2.5 py-0.5 rounded-full text-[11px] border border-[#d2e3fc]">
+          LINEAR16 · 16kHz Mono
         </span>
       </div>
     </div>
   );
 };
+
 

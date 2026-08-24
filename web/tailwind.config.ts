@@ -8,30 +8,70 @@ export default {
   theme: {
     extend: {
       colors: {
-        canvas: '#f8fafc',      // Light crisp slate-50
-        card: '#ffffff',        // Pure white card
-        cardHover: '#f1f5f9',   // Light slate-100
-        borderLine: '#e2e8f0',  // Slate-200 border
-        accentEmerald: '#10b981',
-        accentIndigo: '#6366f1',
-        accentSky: '#0ea5e9',
-        accentAmber: '#f59e0b',
-        accentRose: '#f43f5e',
-        accentPurple: '#8b5cf6',
-        accentCyan: '#06b6d4',
+        googleBlue: {
+          50: '#e8f0fe',
+          100: '#d2e3fc',
+          200: '#aecbfa',
+          300: '#8ab4f8',
+          400: '#669df6',
+          500: '#4285f4',
+          600: '#1a73e8', // Main Google Blue
+          700: '#1967d2',
+          800: '#185abc',
+          900: '#174ea6',
+        },
+        googleRed: {
+          50: '#fce8e6',
+          100: '#fad2cf',
+          500: '#ea4335',
+          600: '#d93025',
+          700: '#c5221f',
+        },
+        googleYellow: {
+          50: '#fef7e0',
+          100: '#feefc3',
+          500: '#fbbc04',
+          600: '#f9ab00',
+          700: '#e37400',
+        },
+        googleGreen: {
+          50: '#e6f4ea',
+          100: '#ceead6',
+          500: '#34a853',
+          600: '#1e8e3e',
+          700: '#188038',
+          800: '#137333',
+        },
+        googleGrey: {
+          50: '#f8f9fa',
+          100: '#f1f3f4',
+          200: '#e8eaed',
+          300: '#dadce0',
+          400: '#bdc1c6',
+          500: '#9aa0a6',
+          600: '#80868b',
+          700: '#5f6368',
+          800: '#3c4043',
+          900: '#202124',
+        },
+        surface: '#ffffff',
+        surfaceContainer: '#f8fafd',
+        surfaceVariant: '#f1f3f4',
+        outline: '#dadce0',
+        outlineVariant: '#e8eaed',
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Geist Mono', 'Menlo', 'monospace'],
+        sans: ['Google Sans', 'Roboto', 'Plus Jakarta Sans', 'Inter', '-apple-system', 'sans-serif'],
+        mono: ['Google Sans Code', 'JetBrains Mono', 'Roboto Mono', 'monospace'],
       },
       boxShadow: {
-        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
-        'soft-lg': '0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
-        'colorful-emerald': '0 8px 25px -4px rgba(16, 185, 129, 0.25)',
-        'colorful-indigo': '0 8px 25px -4px rgba(99, 102, 241, 0.25)',
-        'colorful-rose': '0 8px 25px -4px rgba(244, 63, 94, 0.25)',
+        'google-1': '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)',
+        'google-2': '0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)',
+        'google-3': '0 2px 6px 2px rgba(60,64,67,0.15), 0 1px 2px 0 rgba(60,64,67,0.3)',
+        'google-soft': '0 1px 3px 0 rgba(60,64,67,0.08), 0 2px 6px 2px rgba(60,64,67,0.04)',
       }
     },
   },
   plugins: [],
 } satisfies Config;
+

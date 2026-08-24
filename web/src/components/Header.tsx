@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, ShieldCheck, Radio, Clock, Github, Copy, Check } from 'lucide-react';
+import { Activity, ShieldCheck, Clock, Github, Copy, Check } from 'lucide-react';
 import { ConnectionState } from '../types';
 
 interface HeaderProps {
@@ -34,114 +34,119 @@ export const Header: React.FC<HeaderProps> = ({
     switch (connectionState) {
       case 'LIVE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 shadow-2xs ring-2 ring-emerald-100/90">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#e6f4ea] text-[#137333] border border-[#ceead6] shadow-2xs">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34a853] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#1e8e3e]" />
             </span>
             LIVE (16kHz PCM)
           </span>
         );
       case 'CONNECTING':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200/90 shadow-2xs ring-2 ring-amber-100">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-            HANDSHAKING
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#fef7e0] text-[#b06000] border border-[#feefc3] shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#fbbc04] animate-ping" />
+            Connecting
           </span>
         );
       case 'DISCONNECTED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200/90 shadow-2xs ring-2 ring-rose-100">
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            DISCONNECTED
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf] shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#ea4335]" />
+            Disconnected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-slate-100/90 text-slate-600 border border-slate-200/80 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-slate-400" />
-            IDLE STANDBY
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#f1f3f4] text-[#5f6368] border border-[#dadce0] shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#9aa0a6]" />
+            Idle Standby
           </span>
         );
     }
   };
 
   return (
-    <header className="h-16 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl px-6 flex items-center justify-between select-none shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] sticky top-0 z-30">
-      {/* Brand & Title */}
+    <header className="h-16 border-b border-[#dadce0] bg-white px-6 flex items-center justify-between select-none shadow-[0_1px_2px_0_rgba(60,64,67,0.08)] sticky top-0 z-30 font-sans">
+      {/* Brand & Title (Google Cloud Style) */}
       <div className="flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-emerald-400 p-[1.5px] shadow-sm flex items-center justify-center">
-          <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-white">
-            <Radio className="w-4 h-4 text-emerald-400 drop-shadow-xs" />
-          </div>
+        {/* Google 4-Color Icon */}
+        <div className="w-9 h-9 rounded-xl bg-white border border-[#dadce0] shadow-2xs flex items-center justify-center p-1.5">
+          <svg className="w-full h-full" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+          </svg>
         </div>
+
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5">
-              <span>GECX Real-Time Voice Streaming</span>
-              <span className="text-indigo-600 font-extrabold">&</span>
-              <span className="text-slate-800">Telemetry Console</span>
+            <span className="text-[11px] font-medium text-[#5f6368] uppercase tracking-wider">Google Cloud</span>
+            <span className="text-slate-300">/</span>
+            <h1 className="text-sm font-bold text-[#202124] flex items-center gap-1.5">
+              <span>GECX Voice Streaming Console</span>
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-gradient-to-r from-indigo-50 to-sky-50 text-indigo-700 border border-indigo-200/70 shadow-2xs">
-              PoC v1.0
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#e8f0fe] text-[#1a73e8] border border-[#d2e3fc]">
+              Dialogflow CX A2A
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono font-medium mt-0.5">
-            <span className="text-emerald-600 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+          <div className="flex items-center gap-2 text-[11px] text-[#5f6368] font-normal mt-0.5">
+            <span className="text-[#137333] font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1e8e3e] inline-block" />
               BidiRunSession
             </span>
-            <span className="text-slate-300">/</span>
-            <span className="text-sky-600 font-semibold">Audio-to-Audio (A2A)</span>
-            <span className="text-slate-300">/</span>
-            <span className="text-indigo-600 font-semibold">Google API Gateway</span>
+            <span className="text-[#dadce0]">•</span>
+            <span className="text-[#1a73e8] font-medium">LINEAR16 16kHz Audio</span>
+            <span className="text-[#dadce0]">•</span>
+            <span>API Gateway Ingress</span>
           </div>
         </div>
       </div>
 
-      {/* Center Metadata Badges */}
+      {/* Center Metadata Badges (Material 3 Style Pills) */}
       <div className="hidden md:flex items-center gap-2.5">
         {/* Gateway Chip */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-700 shadow-2xs">
-          <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-slate-500 font-medium">Gateway:</span>
-          <span className="font-bold text-slate-800">gecx-agent-gateway</span>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f1f3f4] border border-[#dadce0] text-xs text-[#3c4043]">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#1a73e8]" />
+          <span className="text-[#5f6368]">Gateway:</span>
+          <span className="font-medium text-[#202124]">gecx-agent-gateway</span>
         </div>
 
         {/* Session Chip with 1-Click Copy */}
         {sessionId ? (
           <button
             onClick={handleCopySessionId}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono transition-all duration-200 shadow-2xs group relative cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs transition-all duration-150 cursor-pointer ${
               copied
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 ring-2 ring-emerald-100'
-                : 'bg-indigo-50/70 hover:bg-indigo-100/90 border-indigo-200/80 text-indigo-900 hover:border-indigo-300'
+                ? 'bg-[#e6f4ea] border-[#ceead6] text-[#137333]'
+                : 'bg-[#e8f0fe] hover:bg-[#d2e3fc] border-[#d2e3fc] text-[#1a73e8]'
             }`}
             title={`클릭하여 전체 세션 ID 복사 (${sessionId})`}
           >
-            <Activity className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-            <span className="text-indigo-600 font-medium">Session:</span>
-            <span className="font-bold text-indigo-950">
-              {sessionId.length > 20 ? `${sessionId.substring(0, 16)}...` : sessionId}
+            <Activity className="w-3.5 h-3.5 text-[#1a73e8] shrink-0" />
+            <span className="font-medium text-[#5f6368]">Session:</span>
+            <span className="font-mono font-medium text-[#174ea6]">
+              {sessionId.length > 18 ? `${sessionId.substring(0, 14)}...` : sessionId}
             </span>
-            <div className="ml-1 pl-1.5 border-l border-indigo-200 flex items-center">
+            <div className="ml-1 pl-1 border-l border-[#d2e3fc] flex items-center">
               {copied ? (
-                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-                  <span>복사됨!</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-[#137333]">
+                  <Check className="w-3 h-3 text-[#1e8e3e] stroke-[2.5]" />
+                  <span>복사됨</span>
                 </span>
               ) : (
-                <Copy className="w-3.5 h-3.5 text-indigo-500 group-hover:text-indigo-700 transition" />
+                <Copy className="w-3 h-3 text-[#1a73e8]" />
               )}
             </div>
           </button>
         ) : null}
 
         {/* Duration Chip */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-700 shadow-2xs">
-          <Clock className="w-3.5 h-3.5 text-emerald-600" />
-          <span className="text-slate-500 font-medium">Duration:</span>
-          <span className="text-slate-900 font-extrabold">{formatTime(durationSec)}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f1f3f4] border border-[#dadce0] text-xs text-[#3c4043]">
+          <Clock className="w-3.5 h-3.5 text-[#1e8e3e]" />
+          <span className="text-[#5f6368]">Duration:</span>
+          <span className="font-mono font-bold text-[#202124]">{formatTime(durationSec)}</span>
         </div>
       </div>
 
@@ -152,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({
           href="https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming"
           target="_blank"
           rel="noreferrer"
-          className="p-2 rounded-xl bg-slate-100/90 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition shadow-2xs border border-slate-200/60"
+          className="p-2 rounded-full bg-[#f1f3f4] hover:bg-[#e8eaed] text-[#5f6368] hover:text-[#202124] transition border border-[#dadce0]"
           title="GitHub Repository"
         >
           <Github className="w-4 h-4" />
