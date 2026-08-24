@@ -1,5 +1,5 @@
-import React from 'react';
-import { Activity, ShieldCheck, Radio, Clock, Github } from 'lucide-react';
+import React, { useState } from 'react';
+import { Activity, ShieldCheck, Radio, Clock, Github, Copy, Check } from 'lucide-react';
 import { ConnectionState } from '../types';
 
 interface HeaderProps {
@@ -13,6 +13,16 @@ export const Header: React.FC<HeaderProps> = ({
   sessionId,
   durationSec,
 }) => {
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const handleCopySessionId = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!sessionId) return;
+    navigator.clipboard.writeText(sessionId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const formatTime = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
     const secs = Math.floor(totalSec % 60);
@@ -92,13 +102,33 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="font-bold text-indigo-700">gecx-agent-gateway</span>
         </div>
 
-        {/* Session Chip */}
+        {/* Session Chip with 1-Click Copy */}
         {sessionId && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50/70 border border-purple-200/70 text-xs font-mono text-purple-900 shadow-2xs">
-            <Activity className="w-3.5 h-3.5 text-purple-600" />
+          <button
+            onClick={handleCopySessionId}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all duration-200 shadow-2xs group relative cursor-pointer ${
+              copied
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : 'bg-purple-50/80 hover:bg-purple-100/90 border-purple-200/80 text-purple-900 hover:border-purple-300'
+            }`}
+            title={`클릭하여 전체 세션 ID 복사 (${sessionId})`}
+          >
+            <Activity className="w-3.5 h-3.5 text-purple-600 shrink-0" />
             <span className="text-purple-700 font-medium">Session:</span>
-            <span className="font-bold text-purple-700">{sessionId.substring(0, 16)}...</span>
-          </div>
+            <span className="font-bold text-purple-800">
+              {sessionId.length > 20 ? `${sessionId.substring(0, 16)}...` : sessionId}
+            </span>
+            <div className="ml-1 pl-1.5 border-l border-purple-200/80 flex items-center">
+              {copied ? (
+                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 animate-fade-in">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                  <span>복사됨!</span>
+                </span>
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-purple-500 group-hover:text-purple-700 transition" />
+              )}
+            </div>
+          </button>
         )}
 
         {/* Duration Chip */}
