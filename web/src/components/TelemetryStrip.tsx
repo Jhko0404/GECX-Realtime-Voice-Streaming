@@ -5,11 +5,13 @@ import { TelemetryMetric } from '../types';
 interface TelemetryStripProps {
   metric: TelemetryMetric | null;
   totalFrames: number;
+  ttftMs?: number | null;
 }
 
 export const TelemetryStrip: React.FC<TelemetryStripProps> = ({
   metric,
   totalFrames,
+  ttftMs,
 }) => {
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -19,29 +21,29 @@ export const TelemetryStrip: React.FC<TelemetryStripProps> = ({
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 select-none font-sans">
-      {/* Card 1: Chunks Sent & Data Rate (Google Blue) */}
+      {/* Card 1: TTFT (Time To First Token / Sub-second Latency) (Google Blue) */}
       <div className="rounded-2xl bg-white border border-[#dadce0] p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-medium text-[#5f6368] uppercase tracking-wider">Audio Chunks (TX)</span>
+          <span className="text-[11px] font-medium text-[#5f6368] uppercase tracking-wider">TTFT (First Token)</span>
           <div className="w-8 h-8 rounded-full bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center">
             <Radio className="w-4 h-4" />
           </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl lg:text-3xl font-mono font-bold text-[#202124]">
-            {metric ? metric.seq.toLocaleString() : 0}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl lg:text-3xl font-mono font-bold text-[#1a73e8]">
+            {ttftMs != null && ttftMs > 0 ? `${Math.round(ttftMs)}` : '--'}
           </span>
-          <span className="text-xs font-mono font-medium text-[#1a73e8]">
-            ({formatBytes(metric ? metric.bytes_sent : 0)})
-          </span>
+          <span className="text-xs font-mono font-bold text-[#1a73e8]">ms</span>
         </div>
         <div className="flex items-center justify-between text-[11px] text-[#5f6368] mt-2 pt-2 border-t border-[#f1f3f4]">
-          <span>Interval</span>
-          <strong className="text-[#1a73e8] font-medium font-mono">50ms (20 chunks/s)</strong>
+          <span>Streaming Response</span>
+          <strong className="text-[#137333] font-medium font-mono">
+            {ttftMs != null && ttftMs > 0 ? (ttftMs < 1000 ? '⚡ Sub-second' : 'Normal') : 'Awaiting Speech'}
+          </strong>
         </div>
       </div>
 
-      {/* Card 2: Packet Cadence Interval (Google Green) */}
+      {/* Card 2: Packet Cadence Interval & Chunks (Google Green) */}
       <div className="rounded-2xl bg-white border border-[#dadce0] p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-medium text-[#5f6368] uppercase tracking-wider">Cadence Interval</span>
@@ -56,9 +58,9 @@ export const TelemetryStrip: React.FC<TelemetryStripProps> = ({
           <span className="text-xs font-mono font-bold text-[#1e8e3e]">ms</span>
         </div>
         <div className="flex items-center justify-between text-[11px] text-[#5f6368] mt-2 pt-2 border-t border-[#f1f3f4]">
-          <span>Packet Jitter</span>
+          <span>TX Chunks / Rate</span>
           <strong className="text-[#1e8e3e] font-medium font-mono">
-            {metric && metric.chunk_interval_ms > 0 ? `±${Math.abs(metric.chunk_interval_ms - 50).toFixed(1)}ms` : '0.0ms'}
+            {metric ? `${metric.seq} (${formatBytes(metric.bytes_sent)})` : '0 (0 B)'}
           </strong>
         </div>
       </div>

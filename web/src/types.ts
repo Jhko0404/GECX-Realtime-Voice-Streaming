@@ -1,4 +1,6 @@
 export type ConnectionState = 'IDLE' | 'CONNECTING' | 'LIVE' | 'DISCONNECTED' | 'ERROR';
+export type TurnMode = 'TURN_GATED' | 'FULL_DUPLEX';
+export type TurnState = 'IDLE' | 'USER_TURN' | 'AGENT_TURN';
 
 export interface AudioConfig {
   sampleRate: number;

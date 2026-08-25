@@ -9,11 +9,13 @@ import { RcaModal } from './components/RcaModal';
 import { AudioRecorder } from './audio/audio_recorder';
 import { AudioPlayer } from './audio/audio_player';
 import { StreamingWebSocketService } from './services/websocket';
-import { ConnectionState, ChatMessage, TelemetryMetric, RcaReport, LogEntry } from './types';
+import { ConnectionState, ChatMessage, TelemetryMetric, RcaReport, LogEntry, TurnMode, TurnState } from './types';
 import { ShieldCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [connectionState, setConnectionState] = useState<ConnectionState>('IDLE');
+  const [turnMode, setTurnMode] = useState<TurnMode>('TURN_GATED');
+  const [turnState, setTurnState] = useState<TurnState>('IDLE');
   const [sessionId, setSessionId] = useState<string>('');
   const [durationSec, setDurationSec] = useState<number>(0);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -25,6 +27,7 @@ export const App: React.FC = () => {
   const [rmsDb, setRmsDb] = useState<number>(-100);
   const [latestMetric, setLatestMetric] = useState<TelemetryMetric | null>(null);
   const [totalFramesCount, setTotalFramesCount] = useState<number>(0);
+  const [ttftMs, setTtftMs] = useState<number | null>(null);
   const [rcaReport, setRcaReport] = useState<RcaReport | null>(null);
   const [showRcaModal, setShowRcaModal] = useState<boolean>(false);
   const [logs, setLogs] = useState<LogEntry[]>([
@@ -33,7 +36,7 @@ export const App: React.FC = () => {
       timestamp: new Date().toLocaleTimeString(),
       level: 'INFO',
       tag: 'SYSTEM',
-      message: 'Console ready. Initialized 16kHz Linear16 A2A streaming client.',
+      message: 'Console ready. Initialized 16kHz Linear16 Turn-Gated A2A streaming client.',
     },
   ]);
 
@@ -43,11 +46,25 @@ export const App: React.FC = () => {
   const timerRef = useRef<any>(null);
   const currentTranscriptRef = useRef<string>('');
   const bargeInGuardRef = useRef<boolean>(true);
+  const turnModeRef = useRef<TurnMode>('TURN_GATED');
+  const turnStateRef = useRef<TurnState>('IDLE');
+  const isServerTurnCompletedRef = useRef<boolean>(false);
+  const turnStabilizeTimeoutRef = useRef<any>(null);
+  const userSpeechEndTimeRef = useRef<number>(0);
+  const currentTurnTtftRef = useRef<number | null>(null);
 
-  // Sync ref with state
+  // Sync refs with state
   useEffect(() => {
     bargeInGuardRef.current = bargeInGuard;
   }, [bargeInGuard]);
+
+  useEffect(() => {
+    turnModeRef.current = turnMode;
+  }, [turnMode]);
+
+  useEffect(() => {
+    turnStateRef.current = turnState;
+  }, [turnState]);
 
   const addLog = (level: LogEntry['level'], tag: string, message: string) => {
     setLogs((prev) => [
@@ -62,9 +79,27 @@ export const App: React.FC = () => {
     ]);
   };
 
+  const transitionToUserTurn = (reason: string) => {
+    if (turnStabilizeTimeoutRef.current) {
+      clearTimeout(turnStabilizeTimeoutRef.current);
+    }
+    // 150ms Stabilization Buffer (Grill-Me Agreed Spec)
+    turnStabilizeTimeoutRef.current = setTimeout(() => {
+      turnStateRef.current = 'USER_TURN';
+      setTurnState('USER_TURN');
+      addLog('SUCCESS', 'TURN', `Switched to User Turn (${reason}) - Microphone streaming active`);
+    }, 150);
+  };
+
   // Initialize audio recorder and player
   useEffect(() => {
-    playerRef.current = new AudioPlayer();
+    const player = new AudioPlayer();
+    player.setOnPlaybackEnded(() => {
+      if (turnStateRef.current === 'AGENT_TURN') {
+        transitionToUserTurn('Agent voice playback finished');
+      }
+    });
+    playerRef.current = player;
     recorderRef.current = new AudioRecorder();
 
     return () => {
@@ -72,6 +107,7 @@ export const App: React.FC = () => {
       playerRef.current?.close();
       wsServiceRef.current?.disconnect();
       if (timerRef.current) clearInterval(timerRef.current);
+      if (turnStabilizeTimeoutRef.current) clearTimeout(turnStabilizeTimeoutRef.current);
     };
   }, []);
 
@@ -105,27 +141,43 @@ export const App: React.FC = () => {
           setSessionId(newSessionId);
           setConnectionState('LIVE');
           setIsStreaming(true);
+          turnStateRef.current = 'USER_TURN';
+          setTurnState('USER_TURN');
+          isServerTurnCompletedRef.current = false;
           addLog('SUCCESS', 'GECX', `BidiRunSession upstream ready (session: ${newSessionId})`);
+          addLog('INFO', 'TURN', 'Initial Turn: USER_TURN (Listening) - Speak to begin conversation.');
 
-          // Start microphone audio recording with Smart Barge-In Guard
+          // Start microphone audio recording with Turn-Gated & Smart Barge-In Guard
           recorderRef.current?.start((base64Audio, rawInt16) => {
             setAudioData(rawInt16);
-
             const isAgentSpeaking = playerRef.current?.isPlaying() ?? false;
             const chunkDb = AudioRecorder.calculateRmsDb(rawInt16);
 
-            // Smart Barge-In Guard: Echo Gate & Code 1007 Turn Conflict Defense
+            // 1. Turn-Gated Safe Mode (Default & 1007 Zero Error Defense)
+            if (turnModeRef.current === 'TURN_GATED') {
+              if (turnStateRef.current === 'AGENT_TURN' || isAgentSpeaking) {
+                // Send continuous 50ms silence frame to preserve GECX stream cadence without audio conflict
+                wsServiceRef.current?.sendAudioChunk(AudioRecorder.getSilentChunkBase64());
+                return;
+              }
+              wsServiceRef.current?.sendAudioChunk(base64Audio);
+              return;
+            }
+
+            // 2. Full-Duplex Mode with Smart Barge-In Guard
             if (bargeInGuardRef.current && isAgentSpeaking) {
               if (chunkDb < -35) {
-                // Speaker audio leakage/ambient floor: gate chunk to protect GECX CES turn state machine
+                // Speaker audio leakage/ambient floor: send silence frame
+                wsServiceRef.current?.sendAudioChunk(AudioRecorder.getSilentChunkBase64());
                 return;
               } else {
                 // Deliberate user interruption: Flush audio playback and apply 150ms temporal gap
                 playerRef.current?.flush();
-                recorderRef.current?.pauseTemporarily(150);
+                transitionToUserTurn('User Barge-In Speech');
                 setIsBargeIn(true);
                 addLog('WARN', 'BARGE-IN', 'Barge-In detected: Flushed agent audio playback and created 150ms temporal gap.');
                 setTimeout(() => setIsBargeIn(false), 800);
+                wsServiceRef.current?.sendAudioChunk(AudioRecorder.getSilentChunkBase64());
                 return;
               }
             }
@@ -137,6 +189,8 @@ export const App: React.FC = () => {
           if (!transcript) return;
 
           if (isFinal) {
+            userSpeechEndTimeRef.current = Date.now();
+            currentTurnTtftRef.current = null;
             currentTranscriptRef.current = '';
             setCurrentTranscript('');
             addLog('SUCCESS', 'STT', `Recognized (Final): "${transcript}"`);
@@ -166,53 +220,87 @@ export const App: React.FC = () => {
           }
         },
         onAgentOutput: (text, audio, turnCompleted) => {
+          const now = Date.now();
+          // Calculate TTFT on the very first arrival of audio or text response
+          if (userSpeechEndTimeRef.current > 0 && currentTurnTtftRef.current == null) {
+            const calculatedTtft = now - userSpeechEndTimeRef.current;
+            currentTurnTtftRef.current = calculatedTtft;
+            setTtftMs(calculatedTtft);
+            addLog('INFO', 'TTFT', `Time To First Token / Audio: ${Math.round(calculatedTtft)}ms`);
+            userSpeechEndTimeRef.current = 0; // reset for next turn
+          }
+
           if (audio) {
+            if (turnStateRef.current !== 'AGENT_TURN') {
+              turnStateRef.current = 'AGENT_TURN';
+              setTurnState('AGENT_TURN');
+              addLog('INFO', 'TURN', 'Agent speech started: Gated mic streaming to prevent 1007 turn conflict');
+            }
+            isServerTurnCompletedRef.current = false;
             playerRef.current?.queueAudio(audio);
           }
-          if (text) {
-            addLog('SUCCESS', 'AGENT', `Text chunk received (${text.length} chars, completed=${turnCompleted})`);
-            setMessages((prev) => {
-              const updated = [...prev];
 
-              if (currentTranscriptRef.current) {
-                const userSpeech = currentTranscriptRef.current;
-                currentTranscriptRef.current = '';
-                setCurrentTranscript('');
+          if (turnCompleted) {
+            isServerTurnCompletedRef.current = true;
+            if (!playerRef.current?.isPlaying()) {
+              transitionToUserTurn('GECX Server Turn Completed');
+            }
+          }
 
-                updated.push({
-                  id: `usr-${Date.now()}`,
-                  sender: 'user',
-                  text: userSpeech,
-                  timestamp: new Date().toLocaleTimeString(),
-                  isFinal: true,
-                });
-              }
+          // Always ensure an active Agent bubble exists for sub-second visual feedback!
+          setMessages((prev) => {
+            const updated = [...prev];
 
-              const last = updated[updated.length - 1];
-              if (last && last.sender === 'agent' && !last.isFinal) {
-                return [
-                  ...updated.slice(0, -1),
-                  { ...last, text: last.text + text, isFinal: turnCompleted },
-                ];
-              }
+            // If there was any pending user transcript, push it first
+            if (currentTranscriptRef.current) {
+              const userSpeech = currentTranscriptRef.current;
+              currentTranscriptRef.current = '';
+              setCurrentTranscript('');
 
+              updated.push({
+                id: `usr-${Date.now()}`,
+                sender: 'user',
+                text: userSpeech,
+                timestamp: new Date().toLocaleTimeString(),
+                isFinal: true,
+              });
+            }
+
+            const last = updated[updated.length - 1];
+            if (last && last.sender === 'agent' && !last.isFinal) {
               return [
-                ...updated,
+                ...updated.slice(0, -1),
                 {
-                  id: `agt-${Date.now()}`,
-                  sender: 'agent',
-                  text,
-                  timestamp: new Date().toLocaleTimeString(),
+                  ...last,
+                  text: text ? last.text + text : last.text,
                   isFinal: turnCompleted,
+                  latencyMs: currentTurnTtftRef.current ?? last.latencyMs,
                 },
               ];
-            });
+            }
+
+            // Create new streaming agent bubble
+            return [
+              ...updated,
+              {
+                id: `agt-${Date.now()}`,
+                sender: 'agent',
+                text: text || '',
+                timestamp: new Date().toLocaleTimeString(),
+                isFinal: turnCompleted,
+                latencyMs: currentTurnTtftRef.current ?? undefined,
+              },
+            ];
+          });
+
+          if (text) {
+            addLog('SUCCESS', 'AGENT', `Text chunk received (${text.length} chars, completed=${turnCompleted})`);
           }
         },
         onBargeIn: () => {
           setIsBargeIn(true);
           playerRef.current?.flush();
-          recorderRef.current?.pauseTemporarily(150);
+          transitionToUserTurn('Barge-In Interruption Signal');
           addLog('WARN', 'BARGE-IN', 'User speech detected during agent voice playback. Audio playback flushed & 150ms temporal gap applied for clean Turn transition.');
           setTimeout(() => setIsBargeIn(false), 800);
         },
@@ -222,6 +310,8 @@ export const App: React.FC = () => {
         },
         onDisconnected: (report) => {
           setConnectionState('DISCONNECTED');
+          setTurnState('IDLE');
+          turnStateRef.current = 'IDLE';
           setIsStreaming(false);
           recorderRef.current?.stop();
           setRcaReport(report);
@@ -254,6 +344,8 @@ export const App: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to start session:', err);
       setConnectionState('ERROR');
+      setTurnState('IDLE');
+      turnStateRef.current = 'IDLE';
       addLog('ERROR', 'CONN_FAIL', `Session start failed: ${err.message || err}`);
       alert(`세션 연결 실패: ${err.message || err}`);
     }
@@ -272,19 +364,29 @@ export const App: React.FC = () => {
       // Resume mic streaming
       recorderRef.current?.start((base64Audio, rawInt16) => {
         setAudioData(rawInt16);
-
         const isAgentSpeaking = playerRef.current?.isPlaying() ?? false;
         const chunkDb = AudioRecorder.calculateRmsDb(rawInt16);
 
+        if (turnModeRef.current === 'TURN_GATED') {
+          if (turnStateRef.current === 'AGENT_TURN' || isAgentSpeaking) {
+            wsServiceRef.current?.sendAudioChunk(AudioRecorder.getSilentChunkBase64());
+            return;
+          }
+          wsServiceRef.current?.sendAudioChunk(base64Audio);
+          return;
+        }
+
         if (bargeInGuardRef.current && isAgentSpeaking) {
           if (chunkDb < -35) {
+            wsServiceRef.current?.sendAudioChunk(AudioRecorder.getSilentChunkBase64());
             return;
           } else {
             playerRef.current?.flush();
-            recorderRef.current?.pauseTemporarily(150);
+            transitionToUserTurn('User Barge-In Speech');
             setIsBargeIn(true);
             addLog('WARN', 'BARGE-IN', 'Barge-In detected: Flushed agent audio playback and created 150ms temporal gap.');
             setTimeout(() => setIsBargeIn(false), 800);
+            wsServiceRef.current?.sendAudioChunk(AudioRecorder.getSilentChunkBase64());
             return;
           }
         }
@@ -296,10 +398,13 @@ export const App: React.FC = () => {
   };
 
   const handleEndSession = () => {
+    if (turnStabilizeTimeoutRef.current) clearTimeout(turnStabilizeTimeoutRef.current);
     recorderRef.current?.stop();
     playerRef.current?.flush();
     wsServiceRef.current?.disconnect();
     setConnectionState('IDLE');
+    setTurnState('IDLE');
+    turnStateRef.current = 'IDLE';
     setIsStreaming(false);
     setAudioData(null);
     setLatestMetric(null);
@@ -331,6 +436,7 @@ export const App: React.FC = () => {
         <TelemetryStrip
           metric={latestMetric}
           totalFrames={totalFramesCount}
+          ttftMs={ttftMs}
         />
 
         {/* Content: 2-Column Split (Left Deck + Right Dialogue Stage) */}
@@ -343,6 +449,8 @@ export const App: React.FC = () => {
               isStreaming={isStreaming}
               isBargeIn={isBargeIn}
               rmsDb={rmsDb}
+              turnState={turnState}
+              turnMode={turnMode}
             />
 
             {/* Streaming Control Deck */}
@@ -350,9 +458,24 @@ export const App: React.FC = () => {
               connectionState={connectionState}
               isStreaming={isStreaming}
               bargeInGuard={bargeInGuard}
+              turnMode={turnMode}
               onToggleStreaming={handleToggleStreaming}
               onEndSession={handleEndSession}
               onToggleBargeInGuard={() => setBargeInGuard((prev) => !prev)}
+              onToggleTurnMode={() => {
+                const nextMode = turnMode === 'TURN_GATED' ? 'FULL_DUPLEX' : 'TURN_GATED';
+                setTurnMode(nextMode);
+                turnModeRef.current = nextMode;
+                addLog(
+                  'INFO',
+                  'CONFIG',
+                  `Turn Mode switched to: ${
+                    nextMode === 'TURN_GATED'
+                      ? 'Turn-Gated Safe Mode (1007 Zero Error)'
+                      : 'Full-Duplex (Smart Barge-In)'
+                  }`
+                );
+              }}
             />
 
             {/* Google Cloud Session Infrastructure Card */}
@@ -373,6 +496,10 @@ export const App: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-[#5f6368]">Backend Protocol:</span>
                   <strong className="text-[#202124] font-medium font-mono">BidiRunSession (A2A Voice)</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#5f6368]">Turn Strategy:</span>
+                  <strong className="text-[#137333] font-medium font-mono">Turn-Gated Hybrid Safety</strong>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#5f6368]">Security Auth:</span>

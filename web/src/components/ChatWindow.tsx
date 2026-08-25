@@ -18,6 +18,74 @@ interface ChatWindowProps {
   isStreaming: boolean;
 }
 
+const ProgressiveAgentText: React.FC<{
+  text: string;
+  isFinal?: boolean;
+  markdownComponents: any;
+}> = ({ text, isFinal, markdownComponents }) => {
+  const [displayedText, setDisplayedText] = useState(isFinal ? text : '');
+  const timerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (isFinal) {
+      setDisplayedText(text);
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    if (!text) {
+      setDisplayedText('');
+      return;
+    }
+
+    // Fast Typewriter Mode: 30ms per word (Grill-me spec)
+    const words = text.split(' ');
+    let currentWordIndex = 0;
+    setDisplayedText(words[0] || '');
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    timerRef.current = setInterval(() => {
+      currentWordIndex++;
+      if (currentWordIndex < words.length) {
+        setDisplayedText(words.slice(0, currentWordIndex + 1).join(' '));
+      } else {
+        setDisplayedText(text);
+        clearInterval(timerRef.current);
+      }
+    }, 30);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [text, isFinal]);
+
+  if (!displayedText && !text) {
+    return (
+      <div className="flex items-center gap-2.5 py-1 text-[#1a73e8] font-medium text-xs">
+        <div className="flex items-center gap-1">
+          <span className="w-1.5 h-3.5 bg-[#1a73e8] animate-pulse rounded-full" />
+          <span className="w-1.5 h-5 bg-[#34a853] animate-pulse delay-75 rounded-full" />
+          <span className="w-1.5 h-3.5 bg-[#fbbc04] animate-pulse delay-150 rounded-full" />
+          <span className="w-1.5 h-4 bg-[#ea4335] animate-pulse delay-200 rounded-full" />
+        </div>
+        <span className="font-mono font-semibold">Thinking & Voice Streaming...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {displayedText}
+      </ReactMarkdown>
+      {!isFinal && (
+        <span className="inline-block w-1.5 h-4 ml-1 bg-[#1a73e8] animate-pulse align-middle rounded-xs" />
+      )}
+    </div>
+  );
+};
+
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   messages,
   currentTranscript,
@@ -207,20 +275,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   <p className="leading-relaxed whitespace-pre-wrap text-white font-medium">{msg.text}</p>
                 ) : (
                   <div className="text-[#202124] leading-relaxed text-sm">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                      {msg.text}
-                    </ReactMarkdown>
+                    <ProgressiveAgentText
+                      text={msg.text}
+                      isFinal={msg.isFinal}
+                      markdownComponents={markdownComponents}
+                    />
                   </div>
                 )}
 
-                {msg.latencyMs && (
+                {msg.latencyMs != null && msg.latencyMs > 0 && (
                   <div
-                    className={`mt-2 flex items-center gap-1 text-[10px] font-mono font-medium pt-1 border-t border-[#f1f3f4] ${
-                      isUser ? 'text-[#d2e3fc]' : 'text-[#1e8e3e]'
+                    className={`mt-2 flex items-center justify-between text-[10px] font-mono font-medium pt-1 border-t border-[#f1f3f4] ${
+                      isUser ? 'text-[#d2e3fc]' : 'text-[#137333]'
                     }`}
                   >
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>Response Latency: {msg.latencyMs.toFixed(1)}ms</span>
+                    <div className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-[#1e8e3e]" />
+                      <span>TTFT: {Math.round(msg.latencyMs)}ms</span>
+                    </div>
+                    {msg.latencyMs < 1000 && !isUser && (
+                      <span className="bg-[#e6f4ea] text-[#137333] px-1.5 py-0.2 rounded font-bold">
+                        ⚡ Sub-second
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

@@ -2,6 +2,23 @@
 
 All notable changes to the **GECX Real-Time Voice Streaming & Telemetry Console** project will be documented in this file.
 
+## [1.1.0] - 2026-08-25
+
+### Added & Improved
+- **Turn-Gated Safe Mode (Code 1007 Turn Conflict Zero Defense)**:
+  - Strict turn state machine (`USER_TURN` vs `AGENT_TURN`) preventing microphone audio leakage during agent speech.
+  - Dynamic visualizer turn badges ("Agent Speaking (Mic Muted)" vs "Your Turn - Speak Now (Listening)").
+  - Support for `Full-Duplex (Smart Barge-In)` vs `Turn-Gated Safe Mode` toggle switch in `ControlDeck.tsx`.
+- **Sub-Second TTFT & 30ms Progressive Word Streamer (Typewriter Effect)**:
+  - Real-time TTFT (Time-To-First-Token) measurement pipeline anchored from user STT completion (`isFinal: true`) to first GECX server chunk arrival.
+  - `ProgressiveAgentText` component in `ChatWindow.tsx` displaying real-time 30ms/word progressive typing streaming (`두두두둑`) with blinking cursor.
+  - Dedicated TTFT (First Token Latency / Sub-second) card in `TelemetryStrip.tsx`.
+- **Continuous 50ms Silent PCM Cadence Preservation**:
+  - `AudioRecorder.getSilentChunkBase64()` sending continuous 50ms silence frames (-∞ dBFS) during gated turns and barge-in transitions to prevent GECX stream starvation / `generic::failed_precondition` disconnects.
+- **Robust Multi-Turn State Stabilization**:
+  - Auto user turn transition on Web Audio playback completion + 150ms temporal gap.
+  - Barge-In audio player flush cleanup without ghost `onended` events.
+
 ## [1.0.0] - 2026-08-24
 
 ### Added

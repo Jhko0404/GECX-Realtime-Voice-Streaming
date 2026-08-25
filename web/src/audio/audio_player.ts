@@ -16,6 +16,12 @@ export class AudioPlayer {
     }
   }
 
+  private onPlaybackEndedCallback: (() => void) | null = null;
+
+  public setOnPlaybackEnded(callback: (() => void) | null) {
+    this.onPlaybackEndedCallback = callback;
+  }
+
   /**
    * Enqueues base64 LINEAR16 PCM 16kHz audio data to playback.
    */
@@ -58,6 +64,9 @@ export class AudioPlayer {
         if (index > -1) {
           this.activeSources.splice(index, 1);
         }
+        if (this.activeSources.length === 0 && this.onPlaybackEndedCallback) {
+          this.onPlaybackEndedCallback();
+        }
       };
     } catch (err) {
       console.error('Error decoding/playing audio chunk:', err);
@@ -68,17 +77,19 @@ export class AudioPlayer {
    * Barge-In Flush: Immediately stops all active audio playback and clears buffer queue.
    */
   flush() {
-    for (const source of this.activeSources) {
+    const sourcesToStop = [...this.activeSources];
+    this.activeSources = [];
+    if (this.audioContext) {
+      this.nextStartTime = this.audioContext.currentTime;
+    }
+    for (const source of sourcesToStop) {
       try {
+        source.onended = null;
         source.stop();
         source.disconnect();
       } catch (e) {
         // Source might already be stopped
       }
-    }
-    this.activeSources = [];
-    if (this.audioContext) {
-      this.nextStartTime = this.audioContext.currentTime;
     }
   }
 

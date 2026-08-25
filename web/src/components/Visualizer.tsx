@@ -1,11 +1,15 @@
 import React, { useRef, useEffect } from 'react';
 import { Mic, MicOff, Zap, Waves } from 'lucide-react';
 
+import { TurnMode, TurnState } from '../types';
+
 interface VisualizerProps {
   audioData: Int16Array | null;
   isStreaming: boolean;
   isBargeIn: boolean;
   rmsDb: number;
+  turnState?: TurnState;
+  turnMode?: TurnMode;
 }
 
 export const Visualizer: React.FC<VisualizerProps> = ({
@@ -13,6 +17,8 @@ export const Visualizer: React.FC<VisualizerProps> = ({
   isStreaming,
   isBargeIn,
   rmsDb,
+  turnState = 'USER_TURN',
+  turnMode = 'TURN_GATED',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -52,6 +58,19 @@ export const Visualizer: React.FC<VisualizerProps> = ({
       ctx.moveTo(0, height / 2);
       ctx.lineTo(width, height / 2);
       ctx.stroke();
+      return;
+    }
+
+    if (turnMode === 'TURN_GATED' && turnState === 'AGENT_TURN') {
+      // Agent is speaking: Soft Muted/Standby Pulse Line
+      ctx.strokeStyle = '#f9ab00'; // Amber/Yellow
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, height / 2);
+      ctx.lineTo(width, height / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
       return;
     }
 
@@ -102,10 +121,12 @@ export const Visualizer: React.FC<VisualizerProps> = ({
 
     ctx.stroke();
     ctx.shadowBlur = 0;
-  }, [audioData, isStreaming, isBargeIn, rmsDb]);
+  }, [audioData, isStreaming, isBargeIn, rmsDb, turnState, turnMode]);
 
   // Calculate dB percentage for VU Meter (range -60 dBFS to 0 dBFS)
   const vuPercent = Math.max(0, Math.min(100, ((rmsDb + 60) / 60) * 100));
+
+  const isAgentSpeaking = turnState === 'AGENT_TURN';
 
   return (
     <div className="rounded-2xl bg-white border border-[#dadce0] p-4 shadow-sm font-sans flex flex-col gap-3">
@@ -114,24 +135,38 @@ export const Visualizer: React.FC<VisualizerProps> = ({
         <div className="flex items-center gap-2">
           <div
             className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-              isStreaming
-                ? rmsDb > -45
-                  ? 'bg-[#e6f4ea] text-[#1e8e3e]'
-                  : 'bg-[#e8f0fe] text-[#1a73e8]'
-                : 'bg-[#f1f3f4] text-[#5f6368]'
+              !isStreaming
+                ? 'bg-[#f1f3f4] text-[#5f6368]'
+                : isAgentSpeaking && turnMode === 'TURN_GATED'
+                ? 'bg-[#fef7e0] text-[#b06000]'
+                : rmsDb > -45
+                ? 'bg-[#e6f4ea] text-[#1e8e3e]'
+                : 'bg-[#e8f0fe] text-[#1a73e8]'
             }`}
           >
-            {isStreaming ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+            {isStreaming && (!isAgentSpeaking || turnMode === 'FULL_DUPLEX') ? (
+              <Mic className="w-3.5 h-3.5" />
+            ) : (
+              <MicOff className="w-3.5 h-3.5" />
+            )}
           </div>
           <span className="text-xs font-medium text-[#202124]">
             {isStreaming ? (
-              rmsDb > -45 ? (
+              isAgentSpeaking && turnMode === 'TURN_GATED' ? (
+                <span className="text-[#b06000] flex items-center gap-1.5 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-[#f9ab00] animate-pulse" />
+                  Agent Speaking (Mic Muted)
+                </span>
+              ) : rmsDb > -45 ? (
                 <span className="text-[#137333] flex items-center gap-1.5 font-bold">
                   <span className="w-2 h-2 rounded-full bg-[#34a853] animate-ping" />
-                  Active Speech Detected
+                  Your Turn - Speaking...
                 </span>
               ) : (
-                <span className="text-[#1a73e8] font-medium">Ambient Noise Tracking (50ms)</span>
+                <span className="text-[#1a73e8] font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#1a73e8] animate-pulse" />
+                  Your Turn - Speak Now (Listening)
+                </span>
               )
             ) : (
               <span className="text-[#5f6368] font-normal">Microphone Ready</span>
@@ -143,6 +178,10 @@ export const Visualizer: React.FC<VisualizerProps> = ({
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf] animate-bounce">
             <Zap className="w-3.5 h-3.5 fill-current text-[#d93025]" /> Barge-In Interrupt
           </span>
+        ) : isAgentSpeaking && turnMode === 'TURN_GATED' ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#fef7e0] border border-[#feefc3] text-[#b06000] text-[11px] font-medium">
+            <span>Turn-Gated Guard</span>
+          </div>
         ) : (
           <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f1f3f4] border border-[#dadce0] text-[#5f6368] text-[11px]">
             <Waves className="w-3 h-3 text-[#1a73e8]" />

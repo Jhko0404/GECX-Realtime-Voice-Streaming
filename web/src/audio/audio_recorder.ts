@@ -8,6 +8,18 @@ export class AudioRecorder {
   private pauseTimeout: any = null;
   public isRecording: boolean = false;
 
+  private static cachedSilentBase64: string | null = null;
+  public static getSilentChunkBase64(): string {
+    if (!this.cachedSilentBase64) {
+      let binary = '';
+      for (let i = 0; i < 1600; i++) {
+        binary += '\0';
+      }
+      this.cachedSilentBase64 = btoa(binary);
+    }
+    return this.cachedSilentBase64;
+  }
+
   public static calculateRmsDb(int16Array: Int16Array): number {
     if (int16Array.length === 0) return -100.0;
     let sum = 0;
