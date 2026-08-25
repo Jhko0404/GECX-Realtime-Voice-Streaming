@@ -160,36 +160,91 @@
 
 ---
 
-## 6. GECX 1007 Barge-In & 인터럽트 상태 머신 충돌 이슈
+## 6. GECX 1007 턴 충돌 및 오디오 스트림 안정성 이슈
 
-### 🚨 Issue 6.1: 말 끊기(Barge-in) 시 `Code 1007 (generic::invalid_argument / failed_precondition)` 단절
-* **증상**: 긴 대화 도중 사용자가 에이전트 음성 출력 중간에 끼어들거나(Barge-In) 추임새를 넣는 순간 업스트림 WebSocket이 강제 단절됨 (`Code 1007`).
+### 🚨 Issue 6.1: 에이전트 발화 중 마이크 오디오 유입 시 `Code 1007 (generic::invalid_argument)` 턴 충돌
+* **증상**: 에이전트가 음성(TTS)을 출력하는 동안 사용자의 마이크 소리(-28 dBFS)나 스피커 하울링이 유입될 때 업스트림 WebSocket이 즉시 `Code 1007`로 강제 단절됨.
 * **원인 (Root Cause)**:
-  * GECX CES 상태 머신이 에이전트 발화 중 사용자 오디오 청크를 수신하여 `User Turn`으로 상태를 전환하는 동안, 클라이언트로부터 연속 오디오 청크가 0ms 여유 없이 밀려들어 패킷 순서 충돌 및 내부 상태 예외 발생.
+  * Google Cloud CES(Conversational Engine Service)의 턴 상태 머신은 `Agent Turn` 진행 중 클라이언트로부터 음성 유효 오디오 패킷이 들어올 경우, 상태 충돌로 판단하여 `generic::invalid_argument` 예외를 발생시키고 세션을 종료함.
 * **해결 방법 (Solution)**:
-  1. **오디오 패킷 주입 로직의 '중단 인지' 연동 (Action Item ①)**:
-     * `interruptionSignal` 수신 즉시 로컬 재생 버퍼 플러시(`AudioPlayer.flush()`).
-     * `AudioRecorder.pauseTemporarily(150)`를 적용하여 **150ms 템포럴 갭 디바운스**를 주어 GECX 상태 머신이 User Turn으로 안전하게 전환되도록 보장.
-  2. **VAD 파라미터 임시 완화 (Action Item ②)**:
-     * Start of Speech(SOS) 민감도를 0.30~0.40으로 조정하고 연속 유효 프레임을 4프레임(160~200ms)으로 설정하여 짧은 잡음으로 인한 급격한 턴 전환 방지.
-  3. **SEANet 기반 Adaptive Noise Cancellation 활성화 (Action Item ③)**:
-     * GECX Deployment & Channel Settings에서 Adaptive Noise Cancellation을 활성화하여 주변 소음 및 False Barge-In 차단.
-  * 📄 상세 기술 가이드: [`docs/gecx_1007_turn_bargein_resolution_guide.md`](./gecx_1007_turn_bargein_resolution_guide.md)
+  1. **Turn-Gated Safe Mode 상태 머신 구현 ([`App.tsx`](../web/src/App.tsx), [`types.ts`](../web/src/types.ts))**:
+     * 에이전트 발화 시작 시 `turnState`를 `AGENT_TURN`으로 전환하고, 마이크 입력 신호를 100% 게이트(차단)하여 서버로 음성 신호가 유입되지 않도록 방어.
+  2. **150ms 템포럴 안정화 버퍼**:
+     * 에이전트 음성 출력이 끝난 후 즉시 마이크를 열지 않고, 150ms의 안정화 지연을 두어 CES 엔진의 내부 버퍼가 완전히 정리된 후 `USER_TURN`으로 전환.
+  3. **동적 턴 상태 UI 및 제어 스위치 ([`Visualizer.tsx`](../web/src/components/Visualizer.tsx), [`ControlDeck.tsx`](../web/src/components/ControlDeck.tsx))**:
+     * "Agent Speaking (Mic Muted)" ➔ "Your Turn - Speak Now (Listening)" 뱃지 표시 및 Google 4-Color 파형 연동.
 
 ---
 
-## 📊 트러블슈팅 요약 매트릭스
+### 🚨 Issue 6.2: 마이크 게이트 시 스트림 완전 단절로 인한 `Code 1007 (generic::failed_precondition)` 발생
+* **증상**: Turn-Gated 모드 적용 후 긴 문장을 말하거나 마이크 입력을 차단했을 때, `last_chunk_sent_before_ms: 4812ms` 후 `generic::failed_precondition: com.google.cloud.ai.ces.shared.exception`과 함께 단절됨.
+* **원인 (Root Cause)**:
+  * GECX `BidiRunSession`은 16kHz 오디오 프레임이 4초 이상 완전히 끊기면(0 Byte Stream Starvation), 오디오 디코더 상태 머신에서 스트림 고갈로 인한 `failed_precondition` 예외를 발생시킴.
+* **해결 방법 (Solution)**:
+  * **연속 50ms 묵음 패킷(Silent PCM Frame) 전송 보장 ([`audio_recorder.ts`](../web/src/audio/audio_recorder.ts))**:
+    * 마이크가 게이트된 상태(`AGENT_TURN`)에서도 패킷 송신을 멈추지 않고, **초당 20회(50ms 주기)의 안전한 묵음(Int16 zeros, -∞ dBFS) 패킷**을 지속 전송.
+    * GECX 서버는 스트림 공백 없이 100% 정상 작동하며, 묵음 데이터이므로 턴 충돌(1007)도 완벽히 방지됨.
 
-| 영역 | 이슈 요약 | 근본 원인 | 해결 방안 | 적용 결과 |
+---
+
+## 7. 대화 흐름 멈춤(Freeze) 및 턴 자동 복구 이슈
+
+### 🚨 Issue 7.1: 긴 안내 멘트 수신 후 다음 사용자 발화 시 대화 멈춤 현상
+* **증상**: 에이전트의 긴 안내(예: 334자 고지서 내역) 후 사용자가 말을 시작했으나 화면에 STT가 뜨지 않고 세션 진행이 멈춤.
+* **원인 (Root Cause)**:
+  * 클라이언트의 턴 복구 로직이 GECX 서버의 명시적인 `turnCompleted: true` 수신 여부에만 종속되어 있어, 사용자가 말하여 오디오를 플러시(`flush()`)했거나 서버 패킷 플래그 타이밍이 어긋났을 때 `AGENT_TURN`에 갇혀 마이크가 영구 Mute 됨.
+* **해결 방법 (Solution)**:
+  1. **스피커 무음 기준 자동 턴 복구 ([`App.tsx`](../web/src/App.tsx))**:
+     * 서버의 `turnCompleted` 신호 도착 여부와 상관없이, 브라우저 스피커의 TTS 오디오 재생이 완료되면(`AudioPlayer.setOnPlaybackEnded`) 150ms 후 무조건 `USER_TURN`으로 안전 복구.
+  2. **Barge-In 플러시 콜백 안정화 ([`audio_player.ts`](../web/src/audio/audio_player.ts))**:
+     * 오디오 소스 강제 중단(`stop`) 시 고스트 `onended` 이벤트가 발생하지 않도록 `source.onended = null` 정리.
+
+---
+
+## 8. TTFT(Time-To-First-Token) 가속 및 실시간 스트리밍 UX 이슈
+
+### 🚨 Issue 8.1: A2A 음성 스트리밍 환경에서 텍스트 덩어리 출력으로 인한 지연 체감
+* **증상**: GECX 백엔드가 334자의 전체 텍스트 전사를 첫 패킷에 한 번에 내려보내고 음성은 16초 동안 천천히 재생되어, 텍스트가 스트리밍이 아니라 다 끝난 후 늦게 나오는 것처럼 느껴짐.
+* **원인 (Root Cause)**:
+  * GECX `BidiRunSession`은 오디오는 50ms씩 쪼개어 보내지만 텍스트는 문장/블록 단위로 전송하므로, 음성 재생 시간과 텍스트 노출 타이밍 간의 불일치 발생.
+* **해결 방법 (Solution)**:
+  1. **Sub-second TTFT 정밀 측정 파이프라인**:
+     * 사용자 발화 완료(`isFinal: true`)부터 에이전트 첫 패킷 도달까지의 밀리초(ms)를 계산하여 `TelemetryStrip.tsx` 및 대화창 뱃지에 `TTFT: 280ms ⚡ Sub-second` 실시간 표출.
+  2. **30ms 고속 단어 스트리머 구현 ([`ChatWindow.tsx`](../web/src/components/ChatWindow.tsx) `ProgressiveAgentText`)**:
+     * 첫 패킷 도착 즉시 단어 단위로 쪼개어 30ms 간격으로 실시간 타이핑 커서와 함께 '두두두둑' 출력하여 극대화된 실시간 대화 UX 제공.
+
+---
+
+## 9. CX Agent Studio 프롬프트 엔지니어링 이슈
+
+### 🚨 Issue 9.1: "안녕" 인사 시 "말씀이 잘 들리지 않았습니다" 에러 멘트 오작동
+* **증상**: 사용자가 "안녕"이라고 인사했을 때 에이전트가 "안녕하세요... 말씀하신 내용이 잘 들리지 않았습니다"라고 오작동.
+* **원인 (Root Cause)**:
+  * 프롬프트의 Intent Detection에 단순 인사/스몰톡에 대한 명시적 분기 규칙이 없어, LLM이 '인식 실패'로 오판하여 Exception Handling을 발동함.
+* **해결 방법 (Solution)**:
+  * **프롬프트 턴 제어 최적화**:
+    * 첫인사는 `First Turn Only`로 단 1회 한정.
+    * "안녕/반가워" 등 스몰톡 시 친절하게 맞인사 후 본 질문으로 유도하는 `Intent_Classification` 규칙 보강.
+    * 중복 번호 및 모호한 라우팅 단계 명확화.
+
+---
+
+## 📊 트러블슈팅 종합 매트릭스 (Master Matrix)
+
+| 영역 | 이슈 코드/증상 | 근본 원인 | 해결 방안 | 적용 결과 |
 | :--- | :--- | :--- | :--- | :--- |
-| **인프라** | API Gateway 비대화형 대기 | CLI 확인 프롬프트 블로킹 | `--quiet` 플래그 추가 | 자동화 배포 완수 |
-| **인프라** | Cloud Build 용량 과다 | 대용량 wav 파일 업로드 | `.dockerignore` 구성 | 빌드 컨텍스트 99% 절감 |
-| **보안** | WebSocket 403 Forbidden | Cloud Run IAM 미인증 차단 | `allUsers` 권한 + JWT 티켓 인가 | 2계층 보안 확립 |
-| **런타임** | `websockets` NameError | 모듈 임포트 누락 | `import websockets` 추가 | 런타임 크래시 해결 |
-| **GECX** | 1008 Policy Violation | Service Account 권한 부족 | `dialogflow.admin` 바인딩 | API 세션 권한 획득 |
-| **GECX** | 1008 Not Found | 불일치하는 deployment ID | deployment 파라미터 옵셔널화 | 초안/라이브 자동 연동 |
-| **스트리밍**| 80~120s 침묵 단절 위험 | 무음 시 패킷 전송 중단 | 50ms Always-On + RCA 로깅 | 5분(300s) 연속 전송 성공 |
-| **네트워크**| Gateway WebSocket 1006 | API Gateway WS 미지원 | Control/Data Plane 분리 WSS 라우팅 | 5회 연속 100% E2E 검증 |
-| **Barge-In**| 1007 Invalid Argument | 턴 전환 시 오디오 충돌 | **150ms 템포럴 갭 + 재생 플러시** | **Barge-in 세션 안정화** |
+| **인프라** | API Gateway 배포 멈춤 | 비대화형 CLI 프롬프트 블로킹 | `--quiet` 플래그 추가 | 자동화 배포 완수 |
+| **인프라** | Cloud Build 92MB 지연 | wav/venv 업로드 과다 | `.dockerignore` 구성 | 컨텍스트 99% 절감 |
+| **보안** | WebSocket 403 Forbidden | Cloud Run IAM 미인증 차단 | `allUsers` 권한 + 60s 서명 JWT 티켓 | 2계층 보안 확립 |
+| **런타임** | `websockets` NameError | 모듈 임포트 누락 | `import websockets` 추가 | 백엔드 크래시 방지 |
+| **GECX** | 1008 Policy Violation | Service Account 권한 부족 | `dialogflow.admin` 바인딩 | BidiRunSession 권한 획득 |
+| **GECX** | 1008 Not Found | deployment 파라미터 불일치 | deployment ID 옵셔널화 | Draft/Live 자동 연결 |
+| **스트리밍**| 80~120s 침묵 단절 | 무음 시 패킷 전송 중단 | 50ms Always-On + RCA 로깅 | 5분(300s) 연속 전송 |
+| **네트워크**| Gateway WebSocket 1006 | API Gateway WS 미지원 | Control/Data Plane WSS 분리 라우팅 | 5회 연속 100% E2E 검증 |
+| **Barge-In**| 1007 Invalid Argument | 에이전트 음성 중 마이크 유입 | **Turn-Gated Safe Mode + 150ms 갭** | **턴 충돌 제로 달성** |
+| **스트림** | 1007 Failed Precondition | 4.8초 마이크 드롭(고갈) | **50ms 묵음 패킷(-∞ dBFS) 지속 전송** | **스트림 고갈 원천 차단** |
+| **대화 흐름**| 대화 멈춤 (Freeze) | 서버 턴 완료 플래그 종속 | **스피커 무음 기준 자동 턴 복구** | **연속 대화 완벽 복구** |
+| **UX/TTFT** | 텍스트 덩어리 지연 체감 | 문장 단위 텍스트 전송 | **30ms 단어 스트리머 ('두두두둑')** | **Sub-second TTFT 체감** |
+| **프롬프트**| 인사 오작동/인식 실패 | 스몰톡 분류 누락 | **First-Turn 전용 + 스몰톡 규칙** | **자연스러운 음성 대화** |
 
 
