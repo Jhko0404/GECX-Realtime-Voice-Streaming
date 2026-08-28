@@ -67,30 +67,7 @@ gcloud config set project my-gcp-ai-project
 
 ---
 
-## 3. Quick Start: Run the Demo in 30 Seconds
-
-### Option A: Local Mock Demo (GCP 계정 없이 30초 내 즉시 UI/오디오 시연)
-GCP 프로젝트나 클라우드 권한이 없어도 로컬 모의(Mock) GECX 서버를 통해 전체 실시간 음성 스트리밍 콘솔과 오디오 시각화, Barge-in 동작을 바로 체험할 수 있습니다.
-
-```bash
-# 로컬 모의(Mock) 스트리밍 서버 모드로 실행 (90초 단절 시뮬레이션 포함)
-./scripts/run_local.sh --mock 90
-```
-1. 웹 브라우저에서 `http://localhost:8080` 접속
-2. **[CONNECT & START SESSION]** 버튼 클릭
-3. 브라우저 마이크 권한 허용 후 한국어 음성 발화("오늘 날씨 어때?") 테스트 진행
-
----
-
-### Option B: Live GECX Connected Mode (실제 GCP 환경 연동 로컬 실행)
-```bash
-# 실제 ces.googleapis.com 연결 모드로 로컬 실행
-./scripts/run_local.sh
-```
-
----
-
-## 4. Key Demo Features & Capabilities
+## 3. Key Features & Capabilities
 
 ### 1) 실시간 양방향 음성 대화 (Audio-to-Audio Native Streaming)
 * 브라우저 마이크 음성을 Web Audio `AudioWorklet`을 통해 16kHz LINEAR16 PCM으로 실시간 변환하고, 50ms 단위 청크로 무중단 스트리밍합니다.
@@ -111,7 +88,7 @@ GCP 프로젝트나 클라우드 권한이 없어도 로컬 모의(Mock) GECX �
 
 ---
 
-## 5. System Architecture
+## 4. System Architecture
 
 클라이언트 브라우저와 Google Cloud 백엔드 간의 제어 플레인(인증/세션 발급)과 데이터 플레인(고속 WebSocket 스트리밍)이 안전하게 분리된 구조입니다.
 
@@ -150,7 +127,7 @@ flowchart TB
 
 ---
 
-## 6. Audio & Streaming Specifications
+## 5. Audio & Streaming Specifications
 
 | 파라미터 | 규격 / 사양 | 기술적 설명 |
 | :--- | :--- | :--- |
@@ -163,7 +140,7 @@ flowchart TB
 
 ---
 
-## 7. Google Cloud Production Deployment Guide
+## 6. Google Cloud Production Deployment Guide
 
 ### 사전 준비사항 (Prerequisites)
 1. **Google Cloud SDK (`gcloud`)** 설치 및 로그인 (`gcloud auth login`)
@@ -236,7 +213,7 @@ python3 scripts/stress_test_10m.py http://localhost:8080 600
 
 ---
 
-## 8. Repository Directory Structure
+## 7. Repository Directory Structure
 
 ```text
 GECX-Realtime-Voice-Streaming/
@@ -287,7 +264,7 @@ GECX-Realtime-Voice-Streaming/
 
 ---
 
-## 9. Troubleshooting & FAQ
+## 8. Troubleshooting & FAQ
 
 | 에러 / 증상 | 발생 원인 | 즉시 해결 방법 |
 | :--- | :--- | :--- |
@@ -299,7 +276,7 @@ GECX-Realtime-Voice-Streaming/
 
 ---
 
-## 10. Technical Architecture Documentation Index
+## 9. Technical Architecture Documentation Index
 
 개발자 및 엔지니어를 위한 상세 기술 사양 문서 목록입니다:
 
@@ -308,5 +285,5 @@ GECX-Realtime-Voice-Streaming/
 
 ---
 
-## 11. License & Attribution
+## 10. License & Attribution
 Designed and built for **Google Cloud Customer Experience (GECX) Real-Time Voice Streaming Evaluation**.
