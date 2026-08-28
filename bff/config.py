@@ -4,9 +4,9 @@ import google.auth
 import google.auth.transport.requests
 
 class Settings(BaseSettings):
-    PROJECT_ID: str = "gemeni-workshop"
+    PROJECT_ID: str = "your-gcp-project-id"
     LOCATION: str = "us"
-    APP_ID: str = "83281339-6a20-482e-8064-4cf96c678d76"
+    APP_ID: str = "your-gecx-app-id"
     DEPLOYMENT_ID: str = "default"
     REGION: str = "us-central1"
     SERVICE_NAME: str = "gecx-streaming-bff"

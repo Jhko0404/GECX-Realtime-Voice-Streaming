@@ -14,8 +14,13 @@ dist-ssr/
 
 # Environment & Credentials
 .env
+.env.local
 *.pem
 *.key
+credentials.json
+token.json
+client_secret*.json
+drive_token.json
 
 # Logs & Test outputs
 *.log

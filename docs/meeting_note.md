@@ -4,7 +4,7 @@ GE for CX에서 제공하는 스트리밍 api로 테스트 결과 2분 이내에
 데모 웹 페이지를 만들어서, 음성으로 대화시 화면에 스트리밍 형태로 텍스트가 표시되는 것을 확인
 
 [스트리밍 api 가이드]
-/usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/BidiRunSession.md
+BidiRunSession.md
 
 [스트리밍 api api 개발 가이드]
 

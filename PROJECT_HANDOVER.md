@@ -7,7 +7,7 @@
 
 ## 📌 1. 프로젝트 개요 및 핵심 정체성 (Project Identity)
 
-* **프로젝트명**: `02.gecx-streaming-api` (GECX Real-Time Voice Streaming & Telemetry Console)
+* **프로젝트명**: `GECX-Real-Time-Voice-Streaming` (GECX Real-Time Voice Streaming & Telemetry Console)
 * **목적**: Google Cloud Customer Engagement Suite (CES / GECX)의 **Gemini A2A 실시간 양방향 음성 스트리밍(`BidiRunSession`)**을 안정적으로 중계하는 초저지연 BFF(Backend-for-Frontend) 게이트웨이 및 Google Material 3 디자인 기반 웹 콘솔 구축.
 * **주요 특징**:
   * **Control Plane / Data Plane 분리**: REST API Gateway를 통한 60초 단기 서명 JWT 티켓 발급 후 Cloud Run WSS 직접 연결.
@@ -21,7 +21,7 @@
 
 ### 2.1 로컬 개발 환경 실행
 ```bash
-cd /usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api
+cd .
 
 # 1. 환경 설정 (가상환경 및 npm 의존성 최초 1회)
 ./scripts/setup_env.sh
@@ -61,13 +61,13 @@ cd /usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api
 
 | 항목 | 리소스 값 / ID | 설명 |
 | :--- | :--- | :--- |
-| **GCP Project** | `gemeni-workshop` | Google Cloud 프로젝트 ID |
+| **GCP Project** | `your-gcp-project-id` | Google Cloud 프로젝트 ID |
 | **Region / Location** | `us-central1` / `us` | Cloud Run 및 GECX 리전 |
-| **GECX App ID** | `83281339-6a20-482e-8064-4cf96c678d76` | 코웨이 요금/청구 전문 AI 가상 상담원 App |
+| **GECX App ID** | `your-gecx-app-id` | 코웨이 요금/청구 전문 AI 가상 상담원 App |
 | **Cloud Run Service** | `gecx-streaming-bff` | BFF WebSocket 프록시 & SPA 서빙 컨테이너 |
 | **Cloud Run URL** | `https://gecx-streaming-bff-cwljmdzpfa-uc.a.run.app` | Cloud Run 비공개/직접 WSS 엔드포인트 |
 | **API Gateway URL** | `https://gecx-agent-gateway-47lgs0mq.uc.gateway.dev` | Control Plane REST 엔드포인트 |
-| **BFF Service Account** | `gecx-bff-sa@gemeni-workshop.iam.gserviceaccount.com` | `roles/dialogflow.admin`, `roles/ces.invoker` |
+| **BFF Service Account** | `gecx-bff-sa@your-gcp-project-id.iam.gserviceaccount.com` | `roles/dialogflow.admin`, `roles/ces.invoker` |
 | **Audio Spec** | `16kHz, 16-bit Mono, Linear16 PCM` | 50ms 프레임 (800 샘플, 1600 Bytes) |
 
 ---
@@ -75,27 +75,27 @@ cd /usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api
 ## 📂 4. 핵심 코드베이스 파일 색인 (File Map)
 
 ### 🔹 Backend (BFF - FastAPI)
-* [`bff/main.py`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/bff/main.py): FastAPI 서버 진입점, `/api/v1/session/start` REST 엔드포인트, `/ws/stream` WebSocket 양방향 프록시 루프.
-* [`bff/gecx_client.py`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/bff/gecx_client.py): Google `ces.googleapis.com` BidiRunSession gRPC/WSS 업스트림 클라이언트 및 ADC OAuth 토큰 인증.
-* [`bff/auth.py`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/bff/auth.py): 60초 TTL 단기 서명 JWT 세션 티켓 발급 및 검증.
-* [`bff/telemetry.py`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/bff/telemetry.py): 마이크로초 프레임 텔레메트리, RMS/dBFS 음성 감지, RFC 6455 Close Code 분석기.
-* [`bff/config.py`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/bff/config.py): 환경 변수 및 GCP 리소스 경로 빌더.
+* [`bff/main.py`](bff/main.py): FastAPI 서버 진입점, `/api/v1/session/start` REST 엔드포인트, `/ws/stream` WebSocket 양방향 프록시 루프.
+* [`bff/gecx_client.py`](bff/gecx_client.py): Google `ces.googleapis.com` BidiRunSession gRPC/WSS 업스트림 클라이언트 및 ADC OAuth 토큰 인증.
+* [`bff/auth.py`](bff/auth.py): 60초 TTL 단기 서명 JWT 세션 티켓 발급 및 검증.
+* [`bff/telemetry.py`](bff/telemetry.py): 마이크로초 프레임 텔레메트리, RMS/dBFS 음성 감지, RFC 6455 Close Code 분석기.
+* [`bff/config.py`](bff/config.py): 환경 변수 및 GCP 리소스 경로 빌더.
 
 ### 🔹 Frontend (Web Console - React + Vite + TailwindCSS)
-* [`web/src/App.tsx`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/App.tsx): 메인 상태 관리자, `USER_TURN` ↔ `AGENT_TURN` 안전 상태 머신, TTFT 실시간 측정 파이프라인.
-* [`web/src/audio/audio_recorder.ts`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/audio/audio_recorder.ts): AudioWorklet 기반 16kHz 리샘플링, 연속 50ms 무음 패킷(`getSilentChunkBase64`) 생성.
-* [`web/src/audio/audio_player.ts`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/audio/audio_player.ts): Web Audio 재생 큐, `setOnPlaybackEnded` 스피커 무음 감지, Barge-In 즉시 플러시(`flush`).
-* [`web/src/components/ChatWindow.tsx`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/components/ChatWindow.tsx): 실시간 STT 전사 및 **30ms 고속 단어 타자기 (`ProgressiveAgentText`)**.
-* [`web/src/components/Visualizer.tsx`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/components/Visualizer.tsx): Google Gemini 4-Color 실시간 오실로스코프 및 턴 상태 동적 뱃지.
-* [`web/src/components/TelemetryStrip.tsx`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/components/TelemetryStrip.tsx): TTFT(ms), Cadence Interval, Audio RMS Level, Silence Duration 4-Card 대시보드.
-* [`web/src/components/ControlDeck.tsx`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/components/ControlDeck.tsx): PTT Hotkey (Spacebar), Turn-Gated / Full-Duplex 모드 전환 스위치.
-* [`web/src/components/RcaModal.tsx`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/web/src/components/RcaModal.tsx): 세션 단절 시 5-Hypothesis 자동 진단 리포트 팝업.
+* [`web/src/App.tsx`](web/src/App.tsx): 메인 상태 관리자, `USER_TURN` ↔ `AGENT_TURN` 안전 상태 머신, TTFT 실시간 측정 파이프라인.
+* [`web/src/audio/audio_recorder.ts`](web/src/audio/audio_recorder.ts): AudioWorklet 기반 16kHz 리샘플링, 연속 50ms 무음 패킷(`getSilentChunkBase64`) 생성.
+* [`web/src/audio/audio_player.ts`](web/src/audio/audio_player.ts): Web Audio 재생 큐, `setOnPlaybackEnded` 스피커 무음 감지, Barge-In 즉시 플러시(`flush`).
+* [`web/src/components/ChatWindow.tsx`](web/src/components/ChatWindow.tsx): 실시간 STT 전사 및 **30ms 고속 단어 타자기 (`ProgressiveAgentText`)**.
+* [`web/src/components/Visualizer.tsx`](web/src/components/Visualizer.tsx): Google Gemini 4-Color 실시간 오실로스코프 및 턴 상태 동적 뱃지.
+* [`web/src/components/TelemetryStrip.tsx`](web/src/components/TelemetryStrip.tsx): TTFT(ms), Cadence Interval, Audio RMS Level, Silence Duration 4-Card 대시보드.
+* [`web/src/components/ControlDeck.tsx`](web/src/components/ControlDeck.tsx): PTT Hotkey (Spacebar), Turn-Gated / Full-Duplex 모드 전환 스위치.
+* [`web/src/components/RcaModal.tsx`](web/src/components/RcaModal.tsx): 세션 단절 시 5-Hypothesis 자동 진단 리포트 팝업.
 
 ### 🔹 Documentation & Guides
-* [`docs/troubleshooting.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/troubleshooting.md): 전체 9개 핵심 이슈 및 마스터 해결 매트릭스.
-* [`docs/sdd.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/sdd.md): 엔터프라이즈 솔루션 설계서 (Solution Design Document).
-* [`docs/tdd.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/tdd.md): 오디오 버퍼 연산 및 보안 수학 상세 설계서 (Technical Design Document).
-* [`docs/BidiRunSession.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/BidiRunSession.md): GECX `BidiRunSession` 프로토콜 스펙 정리.
+* [`docs/troubleshooting.md`](docs/troubleshooting.md): 전체 9개 핵심 이슈 및 마스터 해결 매트릭스.
+* [`docs/sdd.md`](docs/sdd.md): 엔터프라이즈 솔루션 설계서 (Solution Design Document).
+* [`docs/tdd.md`](docs/tdd.md): 오디오 버퍼 연산 및 보안 수학 상세 설계서 (Technical Design Document).
+* [`docs/BidiRunSession.md`](docs/BidiRunSession.md): GECX `BidiRunSession` 프로토콜 스펙 정리.
 
 ---
 
@@ -135,6 +135,6 @@ cd /usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api
 
 다음 세션에서 이 프로젝트를 다시 시작할 때는 다음과 같이 요청하면 됩니다:
 
-> *"[`PROJECT_HANDOVER.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/PROJECT_HANDOVER.md)를 읽고 프로젝트 맥락을 파악한 뒤, Roadmap [N]번 작업을 진행해줘."*
+> *"[`PROJECT_HANDOVER.md`](PROJECT_HANDOVER.md)를 읽고 프로젝트 맥락을 파악한 뒤, Roadmap [N]번 작업을 진행해줘."*
 
 AI 어시스턴트는 이 핸드오버 문서를 바탕으로 즉시 모든 상태 머신 규칙, 클라우드 엔드포인트, 오디오 파이프라인을 복원하여 작업을 이어가게 됩니다.

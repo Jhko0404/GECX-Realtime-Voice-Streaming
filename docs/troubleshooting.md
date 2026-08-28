@@ -62,7 +62,7 @@
       --region=us-central1 \
       --member="allUsers" \
       --role="roles/run.invoker" \
-      --project=gemeni-workshop --quiet
+      --project=your-gcp-project-id --quiet
   ```
 
 ---
@@ -91,12 +91,12 @@
 * **해결 방법 (Solution)**:
   * `gecx-bff-sa` 서비스 계정에 `roles/dialogflow.admin` 및 `roles/discoveryengine.admin` IAM 역할을 바인딩.
   ```bash
-  gcloud projects add-iam-policy-binding gemeni-workshop \
-      --member="serviceAccount:gecx-bff-sa@gemeni-workshop.iam.gserviceaccount.com" \
+  gcloud projects add-iam-policy-binding your-gcp-project-id \
+      --member="serviceAccount:gecx-bff-sa@your-gcp-project-id.iam.gserviceaccount.com" \
       --role="roles/dialogflow.admin" --quiet
 
-  gcloud projects add-iam-policy-binding gemeni-workshop \
-      --member="serviceAccount:gecx-bff-sa@gemeni-workshop.iam.gserviceaccount.com" \
+  gcloud projects add-iam-policy-binding your-gcp-project-id \
+      --member="serviceAccount:gecx-bff-sa@your-gcp-project-id.iam.gserviceaccount.com" \
       --role="roles/discoveryengine.admin" --quiet
   ```
 

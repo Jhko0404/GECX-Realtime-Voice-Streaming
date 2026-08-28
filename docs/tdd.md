@@ -10,7 +10,7 @@
 | **Date** | Aug 24, 2026 |
 | **Status** | Approved Draft (Ready for Implementation) |
 | **Target Audience** | Backend/Frontend Engineers, SRE & Audio Systems Engineers |
-| **Parent Architecture** | Solution Design Document ([`sdd.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/sdd.md)) |
+| **Parent Architecture** | Solution Design Document ([`sdd.md`](sdd.md)) |
 
 ---
 
@@ -164,9 +164,9 @@ $$\text{dB}_{\text{FS}} = 20 \times \log_{10}\left(\frac{\text{RMS} + \epsilon}{
 {
   "session_id": "sess-8a7f4e91-3b2c-4d8e-9f0a-1b2c3d4e5f6a",
   "session_ticket": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "ws_endpoint": "wss://gecx-streaming-bff-7p7fk8nj-uc.a.run.app/ws/stream",
+  "ws_endpoint": "wss://gecx-streaming-bff-xxxxx-uc.a.run.app/ws/stream",
   "ticket_ttl_seconds": 60,
-  "app_resource_path": "projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76",
+  "app_resource_path": "projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id",
   "audio_config": {
     "encoding": "LINEAR16",
     "sample_rate_hertz": 16000,
@@ -191,9 +191,9 @@ Cloud Run BFF가 발급 및 검증하는 단기 서명 티켓 명세입니다.
   "aud": "gecx-web-client",
   "iat": 1787561100,
   "exp": 1787561160,
-  "app_id": "83281339-6a20-482e-8064-4cf96c678d76",
+  "app_id": "your-gecx-app-id",
   "location": "us",
-  "project_id": "gemeni-workshop"
+  "project_id": "your-gcp-project-id"
 }
 ```
 * **Signing Algorithm**: HMAC-SHA256 (`HS256`)

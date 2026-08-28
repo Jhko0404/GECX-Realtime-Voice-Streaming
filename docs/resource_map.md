@@ -27,9 +27,9 @@ graph LR
 | :--- | :--- | :---: | :--- | :--- |
 | **🌐 API Gateway** | `gecx-agent-gateway` | `us-central1` | `https://gecx-agent-gateway-47lgs0mq.uc.gateway.dev` | 퍼블릭 Ingress, CORS 제어, OIDC 백엔드 인증 토큰 주입 |
 | **⚡ Cloud Run BFF** | `gecx-streaming-bff` | `us-central1` | `https://gecx-streaming-bff-cwljmdzpfa-uc.a.run.app` | 2 vCPU, 2GiB, Concurrency 80, FastAPI + Uvicorn + Web SPA 서빙 |
-| **🤖 GECX App** | `83281339-6a20-482e-8064-4cf96c678d76` | `us` | `projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76` | CX Agent Studio 실시간 양방향 음성 추론 엔진 (`BidiRunSession`) |
-| **📦 Container Image**| `gecx-streaming-bff:latest` | `gcr.io` | `gcr.io/gemeni-workshop/gecx-streaming-bff:latest` | Multi-stage 경량화 이미지 (Node.js 20 빌더 + Python 3.11 런타임) |
-| **🏢 GCP Project** | `gemeni-workshop` | Global | Project Number: `329992103474` | 전체 리소스 호스팅 프로젝트 |
+| **🤖 GECX App** | `your-gecx-app-id` | `us` | `projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id` | CX Agent Studio 실시간 양방향 음성 추론 엔진 (`BidiRunSession`) |
+| **📦 Container Image**| `gecx-streaming-bff:latest` | `gcr.io` | `gcr.io/your-gcp-project-id/gecx-streaming-bff:latest` | Multi-stage 경량화 이미지 (Node.js 20 빌더 + Python 3.11 런타임) |
+| **🏢 GCP Project** | `your-gcp-project-id` | Global | Project Number: `329992103474` | 전체 리소스 호스팅 프로젝트 |
 
 ---
 
@@ -46,8 +46,8 @@ graph TD
 
 | 서비스 계정 | 이메일 주소 | 부여된 IAM 역할 | 용도 및 권한 범위 |
 | :--- | :--- | :--- | :--- |
-| **게이트웨이 호출자** | `gecx-gateway-sa@gemeni-workshop.iam.gserviceaccount.com` | `roles/run.invoker` | API Gateway가 비공개 Cloud Run을 안전하게 호출하기 위한 OIDC 인증자 |
-| **BFF 백엔드 실행자** | `gecx-bff-sa@gemeni-workshop.iam.gserviceaccount.com` | • `roles/dialogflow.admin`<br>• `roles/discoveryengine.admin`<br>• `roles/logging.logWriter` | Cloud Run BFF가 `ces.googleapis.com`의 `BidiRunSession` 스트림을 연결하고 Cloud Logging에 감사 로그를 기록하기 위한 주체 |
+| **게이트웨이 호출자** | `gecx-gateway-sa@your-gcp-project-id.iam.gserviceaccount.com` | `roles/run.invoker` | API Gateway가 비공개 Cloud Run을 안전하게 호출하기 위한 OIDC 인증자 |
+| **BFF 백엔드 실행자** | `gecx-bff-sa@your-gcp-project-id.iam.gserviceaccount.com` | • `roles/dialogflow.admin`<br>• `roles/discoveryengine.admin`<br>• `roles/logging.logWriter` | Cloud Run BFF가 `ces.googleapis.com`의 `BidiRunSession` 스트림을 연결하고 Cloud Logging에 감사 로그를 기록하기 위한 주체 |
 
 ---
 
@@ -66,7 +66,7 @@ graph TD
     "session_ticket": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "ws_endpoint": "/ws/stream",
     "ticket_ttl_seconds": 60,
-    "app_resource_path": "projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76",
+    "app_resource_path": "projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id",
     "audio_config": {
       "encoding": "LINEAR16",
       "sample_rate_hertz": 16000,

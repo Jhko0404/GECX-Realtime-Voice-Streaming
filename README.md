@@ -8,7 +8,7 @@
 [![GECX](https://img.shields.io/badge/GECX-BidiRunSession_A2A-blue?style=flat)](https://ces.cloud.google.com)
 
 > **Repository**: [https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming](https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming)  
-> **Parent Documentation**: [System Design Document (docs/sdd.md)](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/sdd.md) · [Technical Design Document (docs/tdd.md)](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/tdd.md)
+> **Parent Documentation**: [System Design Document (docs/sdd.md)](docs/sdd.md) · [Technical Design Document (docs/tdd.md)](docs/tdd.md)
 
 ---
 
@@ -51,7 +51,7 @@ flowchart TB
     end
 
     subgraph GECXLayer["4. Google Cloud Suite"]
-        GECX["ces.googleapis.com (BidiRunSession)<br>• Location: us (us-central1)<br>• App ID: 83281339-6a20-482e-8064-4cf96c678d76"]
+        GECX["ces.googleapis.com (BidiRunSession)<br>• Location: us (us-central1)<br>• App ID: your-gecx-app-id"]
     end
 
     CockpitUI -->|"1. HTTPS REST /session/start"| Gateway
@@ -80,7 +80,7 @@ flowchart TB
 ## 📁 Repository Directory Structure
 
 ```text
-02.gecx-streaming-api/
+
 ├── docs/                         # 시스템 및 기술 설계 문서
 │   ├── sdd.md                    # Solution Design Document (SDD)
 │   ├── tdd.md                    # Technical Design Document (TDD)
@@ -128,41 +128,86 @@ flowchart TB
 
 ---
 
-## ⚡ Quick Start & Customer Demo Guide
+## ⚡ Deployment & Quickstart Guide (배포 가이드)
 
-### 1. 사전 환경 초기화
+### 🤖 방법 1: Claude Code를 통한 초고속 자동 배포 (권장 ⭐)
+AI 코딩 에이전트 **Claude Code**를 활용하면 명령어 단 한 줄로 전체 인프라(GCP API, IAM, Cloud Run BFF, API Gateway)가 자동 프로비저닝됩니다.
+
 ```bash
-# GCP 인증 점검, 필수 API 활성화 및 Python 가상환경 구성
+# 1. 터미널에서 Claude Code 실행
+claude
+
+# 2. 아래 프롬프트 입력:
+"현재 프로젝트를 내 GCP 프로젝트(us-central1 리전)에 전체 자동 배포해줘"
+```
+
+#### ⚙️ Claude Code가 내부적으로 자동 수행하는 작업:
+1. 레포지토리 내 [`CLAUDE.md`](CLAUDE.md) 아키텍처 가이드라인 자동 로드
+2. `gcloud auth` 및 `.env` 설정 자동 감지 및 보정
+3. `./scripts/quickstart.sh`를 실행하여 API 활성화 ➔ 서비스 계정/IAM ➔ Private Cloud Run ➔ API Gateway 일괄 구축
+4. 배포 완료 후 즉시 상태 헬스체크(`/api/v1/health`)를 수행하고 최종 접속 URL 안내
+
+---
+
+### 🚀 방법 2: 통합 원클릭 배포 (Quickstart Script)
+터미널에서 직접 배포 스크립트를 실행하여 1분 만에 전체 클라우드 스택을 구축할 수 있습니다.
+
+```bash
+# 통합 자동 배포 스크립트 실행
+./scripts/quickstart.sh [YOUR_GCP_PROJECT_ID] [YOUR_CXAS_APP_ID] [TARGET_REGION]
+
+# 예시:
+./scripts/quickstart.sh my-gcp-ai-project 83281339-6a20-482e-8064-4cf96c678d76 us-central1
+```
+
+---
+
+### 🛠️ 방법 3: 단계별 수동 배포 (3-Step Manual Deployment)
+
+#### Step 1. 환경 초기화 및 필수 API 활성화
+```bash
+# 가상환경 구축, gcloud 로그인 점검 및 API 활성화
 ./scripts/setup_env.sh
 ```
 
-### 2. 로컬 원클릭 데모 실행 (Local Verification & Mock Demo)
+#### Step 2. Private Cloud Run BFF 배포
 ```bash
-# [모드 A] 로컬 90초 단절 시뮬레이션 Mock 모드로 실행 (RCA 모달 즉각 시연 가능)
+# Docker Multi-Stage Container 빌드 & 비공개 Cloud Run 배포
+./scripts/deploy_cloudrun.sh
+```
+
+#### Step 3. Google Cloud API Gateway Ingress 배포
+```bash
+# OpenAPI 기반 Zero-Trust Gateway Ingress 라우팅 배포
+./scripts/deploy_gateway.sh
+```
+
+---
+
+### 🧪 로컬 오프라인 Mock 모드 & 고객 시연 (Offline Simulation)
+GCP 권한이나 네트워크 연결 없이도 로컬에서 1초 만에 전체 UI와 80~120초 세션 단절 RCA 진단 모달을 완벽하게 시연할 수 있습니다.
+
+```bash
+# [모드 A] 로컬 90초 단절 시뮬레이션 Mock 모드로 실행 (RCA 모달 즉각 시연)
 ./scripts/run_local.sh --mock 90
 
 # [모드 B] 실제 GCP GECX(ces.googleapis.com) 연동 모드로 실행
 ./scripts/run_local.sh
 ```
-* 웹 브라우저에서 **`http://localhost:8080`** 접속 후 **[CONNECT & START SESSION]** 클릭.
-* 마이크로 한국어 음성 발화 ("오늘 서울 날씨 어때?") 테스트 진행.
+* 브라우저에서 **`http://localhost:8080`** 접속 ➔ **`[CONNECT & START SESSION]`** 클릭
+* 마이크 실시간 음성 발화("오늘 서울 날씨 어때?") 테스트 진행
 
-### 3. Google Cloud 배포 (Cloud Run & API Gateway)
-```bash
-# 1단계: Cloud Run 비공개 배포 및 IAM 권한 자동 프로비저닝
-./scripts/deploy_cloudrun.sh
+---
 
-# 2단계: API Gateway Ingress 배포
-./scripts/deploy_gateway.sh
-```
-
-### 4. 10분 연속 스트리밍 부하/진단 테스트 (Automated RCA Runner)
+### 🔬 10분 연속 스트리밍 부하/진단 테스트 (Automated RCA Runner)
 ```bash
 # 10분간 50ms 오디오 청크를 연속 스트리밍하여 80~120초 단절 시점과 Close Code 정밀 측정
 python3 scripts/stress_test_10m.py http://localhost:8080 600
 ```
 
-### 5. PoC 리소스 안전 정리 (Teardown)
+---
+
+### 🧹 PoC 리소스 안전 삭제 (Teardown)
 ```bash
 # PoC 종료 후 클라우드 과금 방지를 위한 원클릭 안전 삭제
 ./scripts/cleanup.sh
@@ -174,11 +219,11 @@ python3 scripts/stress_test_10m.py http://localhost:8080 600
 
 | Resource | Value | Description |
 | :--- | :--- | :--- |
-| **GCP Project ID** | `gemeni-workshop` | 대상 워크숍 프로젝트 |
+| **GCP Project ID** | `your-gcp-project-id` | 대상 워크숍 프로젝트 |
 | **Location / Region** | `us` / `us-central1` | GECX 리전 및 Cloud Run/Gateway 리전 |
-| **CXAS App ID** | `83281339-6a20-482e-8064-4cf96c678d76` | CX Agent Studio 앱 리소스 |
-| **Reference Gateway** | `https://coway-agent-gateway-7p7fk8nj.uc.gateway.dev/` | 레퍼런스 Agent Gateway |
-| **CXAS Console** | [https://ces.cloud.google.com/...](https://ces.cloud.google.com/projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76) | 콘솔 직접 접속 링크 |
+| **CXAS App ID** | `your-gecx-app-id` | CX Agent Studio 앱 리소스 |
+| **Reference Gateway** | `https://enterprise-agent-gateway-xxxxx.uc.gateway.dev/` | 레퍼런스 Agent Gateway |
+| **CXAS Console** | [https://ces.cloud.google.com/...](https://ces.cloud.google.com/projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id) | 콘솔 직접 접속 링크 |
 
 ---
 

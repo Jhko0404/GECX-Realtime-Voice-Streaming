@@ -24,7 +24,7 @@ if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs -d '\n' 2>/dev/null || true)
 fi
 
-PROJECT_ID=${PROJECT_ID:-"gemeni-workshop"}
+PROJECT_ID=${PROJECT_ID:-"your-gcp-project-id"}
 REGION=${REGION:-"us-central1"}
 SERVICE_NAME=${SERVICE_NAME:-"gecx-streaming-bff"}
 GATEWAY_ID=${GATEWAY_ID:-"gecx-agent-gateway"}

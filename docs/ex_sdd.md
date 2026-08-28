@@ -713,7 +713,7 @@ flowchart TD
 
 ### 4.2. WorkWeek & ServiceImmediately MCP Tool Interface Specifications & JSON Schemas
 
-The Model Context Protocol (MCP) servers expose standardized, strictly typed JSON-RPC tool contracts conforming to OpenAPI 3.0 / JSON Schema specifications. These tools interface directly with the **WorkWeek HCM** and **ServiceImmediately ITSM** REST APIs (hosted at `https://mock-saas.aishprabhat.demo.altostrat.com`):
+The Model Context Protocol (MCP) servers expose standardized, strictly typed JSON-RPC tool contracts conforming to OpenAPI 3.0 / JSON Schema specifications. These tools interface directly with the **WorkWeek HCM** and **ServiceImmediately ITSM** REST APIs (hosted at `https://mock-saas.demo.company.com`):
 
 ```mermaid
 flowchart LR
@@ -732,7 +732,7 @@ flowchart LR
         ITSMMcpServer["ServiceImmediately MCP Server<br>(JSON-RPC 2.0 / SSE)"]
     end
 
-    subgraph MockSaaSTier["Mock SaaS Target Backends (mock-saas.aishprabhat.demo.altostrat.com)"]
+    subgraph MockSaaSTier["Mock SaaS Target Backends (mock-saas.demo.company.com)"]
         WorkWeekREST["WorkWeek HCM REST API<br>• /workweek/api/v1/employees/*<br>• /workweek/api/v1/leave-balances/*<br>• /workweek/api/v1/leave-requests"]
         ITSMREST["ServiceImmediately ITSM REST API<br>• /serviceimmediately/api/v1/incidents/*<br>• /serviceimmediately/api/v1/incidents/{id}/comments<br>• /serviceimmediately/api/v1/incidents/{id}/status"]
     end

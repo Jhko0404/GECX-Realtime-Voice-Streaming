@@ -22,7 +22,7 @@
 > * **Web Client**: Web Audio API (`AudioWorkletNode`), 16kHz PCM downsampling, 2열 스플릿 콕핏 UI.
 > * **Control Plane**: Google Cloud API Gateway (`gecx-agent-gateway`) Ingress & OIDC ID Token 검증 (`/api/v1/session/start`).
 > * **Data Plane**: Google Cloud Run (`gecx-streaming-bff`) 비공개 컨테이너, 단기 서명 티켓(JWT, 60s TTL) 기반 WSS 스트리밍, 텔레메트리 로거 & RFC 6455 Close Code 인스펙터.
-> * **GECX Core**: Google Cloud CX Agent Studio (`ces.googleapis.com`), `BidiRunSession` A2A 실시간 음성 스트림 (`83281339-6a20-482e-8064-4cf96c678d76`).
+> * **GECX Core**: Google Cloud CX Agent Studio (`ces.googleapis.com`), `BidiRunSession` A2A 실시간 음성 스트림 (`your-gecx-app-id`).
 > * **Observability**: Google Cloud Logging & Monitoring 통합.
 
 ---
@@ -53,7 +53,7 @@ gcloud auth login
 gcloud auth application-default login
 
 # 2. 작업 대상 프로젝트 설정
-gcloud config set project gemeni-workshop
+gcloud config set project your-gcp-project-id
 
 # 3. 필수 GCP API 서비스 활성화
 gcloud services enable \
@@ -75,13 +75,13 @@ gcloud services enable \
 
 | 리소스 구분 (Resource Item) | 설정 값 (Predefined Value) | 설명 및 레퍼런스 |
 | :--- | :--- | :--- |
-| **GCP Project ID** | `gemeni-workshop` | 워크숍 대상 기본 GCP 프로젝트 |
+| **GCP Project ID** | `your-gcp-project-id` | 워크숍 대상 기본 GCP 프로젝트 |
 | **GECX App Location** | `us` | CES API 리소스 위치 (`ces.googleapis.com`) |
-| **GECX App ID** | `83281339-6a20-482e-8064-4cf96c678d76` | 대상 CX Agent Studio 애플리케이션 UUID |
-| **GECX Resource Full Path** | `projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76` | `SessionConfig` 핸드쉐이크 시 주입되는 전체 리소스 경로 |
-| **CX Agent Studio Console** | `https://ces.cloud.google.com/projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76` | 에이전트 빌더 및 콘솔 확인 링크 |
+| **GECX App ID** | `your-gecx-app-id` | 대상 CX Agent Studio 애플리케이션 UUID |
+| **GECX Resource Full Path** | `projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id` | `SessionConfig` 핸드쉐이크 시 주입되는 전체 리소스 경로 |
+| **CX Agent Studio Console** | `https://ces.cloud.google.com/projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id` | 에이전트 빌더 및 콘솔 확인 링크 |
 | **CXAS Automation Tool** | `https://github.com/GoogleCloudPlatform/cxas-scrapi.git` | CX Agent Studio SCRAPI 자동화 스크립트 라이브러리 |
-| **Reference Agent Gateway** | `https://coway-agent-gateway-7p7fk8nj.uc.gateway.dev/` | 실제 GCP 환경에 설정된 참조용 Agent Gateway |
+| **Reference Agent Gateway** | `https://enterprise-agent-gateway-xxxxx.uc.gateway.dev/` | 실제 GCP 환경에 설정된 참조용 Agent Gateway |
 | **Dedicated Agent Gateway** | `gecx-agent-gateway` (Region: `us-central1`) | 본 PoC를 위해 신규 생성하는 전용 Agent Gateway |
 | **Cloud Run BFF Service** | `gecx-streaming-bff` (Region: `us-central1`) | 비공개(`--no-allow-unauthenticated`) 프록시 서비스 |
 | **Cloud Run Ingress Policy** | `Internal & Cloud Load Balancing / API Gateway` | 보안 정책상 Public 직접 접근 전면 차단 |
@@ -90,7 +90,7 @@ gcloud services enable \
 
 ### 0.4. Dedicated Agent Gateway & Cloud Run Private Architecture
 
-보안 정책상 Cloud Run 서비스의 Public URL 직접 노출이 제한되므로, 실제 GCP 환경의 `https://coway-agent-gateway-7p7fk8nj.uc.gateway.dev/` 구성을 모델로 하여 **Google Cloud API Gateway 기반의 전용 Agent Gateway (`gecx-agent-gateway`)**를 프론트에 배치하며, **제어 플레인(Control Plane)과 데이터 플레인(Data Plane)을 명확히 분리**하여 운영합니다.
+보안 정책상 Cloud Run 서비스의 Public URL 직접 노출이 제한되므로, 실제 GCP 환경의 `https://enterprise-agent-gateway-xxxxx.uc.gateway.dev/` 구성을 모델로 하여 **Google Cloud API Gateway 기반의 전용 Agent Gateway (`gecx-agent-gateway`)**를 프론트에 배치하며, **제어 플레인(Control Plane)과 데이터 플레인(Data Plane)을 명확히 분리**하여 운영합니다.
 
 ```text
 [Browser Client]
@@ -121,8 +121,8 @@ gcloud services enable \
 
 | 서비스 계정 (Service Account) | 대상 리소스 | 부여 역할 (IAM Role) | 용도 및 권한 |
 | :--- | :--- | :--- | :--- |
-| **`gecx-gateway-sa`**<br>`gecx-gateway-sa@gemeni-workshop.iam.gserviceaccount.com` | Cloud Run (`gecx-streaming-bff`) | `roles/run.invoker` | API Gateway가 비공개 Cloud Run 서비스를 호출할 수 있는 권한 |
-| **`gecx-bff-sa`**<br>`gecx-bff-sa@gemeni-workshop.iam.gserviceaccount.com` | GECX (`ces.googleapis.com`) | `roles/ces.invoker`<br>`roles/ces.admin` | BFF 컨테이너가 `BidiRunSession` 스트리밍 API를 양방향 호출할 수 있는 권한 |
+| **`gecx-gateway-sa`**<br>`gecx-gateway-sa@your-gcp-project-id.iam.gserviceaccount.com` | Cloud Run (`gecx-streaming-bff`) | `roles/run.invoker` | API Gateway가 비공개 Cloud Run 서비스를 호출할 수 있는 권한 |
+| **`gecx-bff-sa`**<br>`gecx-bff-sa@your-gcp-project-id.iam.gserviceaccount.com` | GECX (`ces.googleapis.com`) | `roles/ces.invoker`<br>`roles/ces.admin` | BFF 컨테이너가 `BidiRunSession` 스트리밍 API를 양방향 호출할 수 있는 권한 |
 | | Cloud Logging | `roles/logging.logWriter` | 세션 프레임 및 RCA 진단 로그를 Cloud Logging에 기록할 수 있는 권한 |
 | **Cloud Build Service Agent** | Artifact Registry / Cloud Run | `roles/run.admin`<br>`roles/iam.serviceAccountUser` | 컨테이너 자동 빌드 및 Cloud Run 자동 배포 권한 |
 
@@ -132,9 +132,9 @@ gcloud services enable \
 
 | 환경 변수 (Env Variable) | 필수 여부 | 기본값 / 설정 예시 | 설명 |
 | :--- | :---: | :--- | :--- |
-| **`PROJECT_ID`** | **필수** | `gemeni-workshop` | Google Cloud 프로젝트 ID |
+| **`PROJECT_ID`** | **필수** | `your-gcp-project-id` | Google Cloud 프로젝트 ID |
 | **`LOCATION`** | **필수** | `us` | GECX CES API 리소스 위치 (`ces.googleapis.com`) |
-| **`APP_ID`** | **필수** | `83281339-6a20-482e-8064-4cf96c678d76` | CX Agent Studio 애플리케이션 식별자 |
+| **`APP_ID`** | **필수** | `your-gecx-app-id` | CX Agent Studio 애플리케이션 식별자 |
 | **`DEPLOYMENT_ID`** | 선택 | `default` | 에이전트 배포 식별자 (미지정 시 default) |
 | **`REGION`** | 선택 | `us-central1` | Cloud Run 및 API Gateway 배포 리전 |
 | **`SERVICE_NAME`** | 선택 | `gecx-streaming-bff` | Cloud Run 비공개 백엔드 서비스명 |
@@ -226,7 +226,7 @@ flowchart TB
 
     subgraph GECXLayer["5. Google Cloud Customer Experience Suite (ces.googleapis.com)"]
         direction TB
-        BidiEndpoint["SessionService/BidiRunSession<br>• Endpoint: ces.googleapis.com<br>• Resource: projects/gemeni-workshop/locations/us/apps/83281339-..."]
+        BidiEndpoint["SessionService/BidiRunSession<br>• Endpoint: ces.googleapis.com<br>• Resource: projects/your-gcp-project-id/locations/us/apps/83281339-..."]
         A2AEngine["A2A (Audio-to-Audio) Engine<br>• Native Audio LLM<br>• Semantic Endpointer (SOS/EOS)"]
         BargeInEngine["Interruption & VAD Engine"]
     end
@@ -268,7 +268,7 @@ flowchart TB
 | **BFF Gateway (Cloud Run)** | `Auth Manager` | GCP Service Account / ADC를 통해 `https://www.googleapis.com/auth/cloud-platform` 스코프의 유효한 OAuth Access Token을 획득/갱신. |
 | | `GECX Streaming Client` | `wss://ces.googleapis.com/ws/...` 연결 수립, 최초 `SessionConfig` 핸드쉐이크 메시지 주입, 양방향 프레임 중계. |
 | | `Diagnostic Telemetry Engine` | 모든 Ingress/Egress 프레임의 타임스탬프, 페이로드 크기, 오디오 음압(RMS), 소켓 에러/종료 이벤트를 정밀 기록. |
-| **GECX Suite** | `BidiRunSession` | A2A 기반 실시간 멀티모달 추론, Semantic VAD(SOS/EOS 감지), 음성 합성 및 턴 완료(Turn Completion) 처리 (`gemeni-workshop` 프로젝트 연동). |
+| **GECX Suite** | `BidiRunSession` | A2A 기반 실시간 멀티모달 추론, Semantic VAD(SOS/EOS 감지), 음성 합성 및 턴 완료(Turn Completion) 처리 (`your-gcp-project-id` 프로젝트 연동). |
 | **Observability** | `Cloud Logging / JSON Sink` | 80~120초 단절 시점의 Close Code, TCP 연결 상태, GCP API 응답 코드를 집계하여 RCA 분석에 제공. |
 
 ---
@@ -622,7 +622,7 @@ flowchart LR
 
 #### 2) Project Directory Structure
 ```text
-02.gecx-streaming-api/
+
 ├── docs/                         # 시스템 및 기술 설계 문서
 │   ├── sdd.md                    # 본 시스템 설계 문서 (SDD, taste-skill & Gateway 통합)
 │   ├── tdd.md                    # 기술 상세 설계 문서 (TDD)
@@ -642,7 +642,7 @@ flowchart LR
 │   ├── auth.py                   # 세션 서명 토큰(JWT) 발급/검증
 │   ├── gecx_client.py            # ces.googleapis.com BidiRunSession 스트리밍 클라이언트
 │   ├── telemetry.py              # 프레임 레벨 로거, 지연시간/RMS 측정 모듈
-│   └── config.py                 # GCP Project/Location/App 환경설정 (gemeni-workshop)
+│   └── config.py                 # GCP Project/Location/App 환경설정 (your-gcp-project-id)
 ├── web/                          # React Frontend 클라이언트 (taste-skill Standard)
 │   ├── package.json              # 프론트엔드 의존성 (@fontsource/geist-sans, lucide-react 등)
 │   ├── vite.config.ts            # Vite 빌드 설정
@@ -715,11 +715,11 @@ PoC를 통해 80~120초 단절의 근본 원인이 규명된 후, 프로덕션 �
 
 ## 9. Appendix & Reference Links
 
-* **GECX API Reference**: [`BidiRunSession.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/BidiRunSession.md)
-* **Requirements & Meeting Note**: [`meeting_note.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/meeting_note.md)
-* **Enterprise Reference SDD**: [`ex_sdd.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/ex_sdd.md)
-* **Technical Design Document**: [`tdd.md`](file:///usr/local/google/home/junghyunko/git/2026-CX/02.gecx-streaming-api/docs/tdd.md)
-* **Reference Live Agent Gateway**: [https://coway-agent-gateway-7p7fk8nj.uc.gateway.dev/](https://coway-agent-gateway-7p7fk8nj.uc.gateway.dev/)
-* **CX Agent Studio Console**: [https://ces.cloud.google.com/projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76](https://ces.cloud.google.com/projects/gemeni-workshop/locations/us/apps/83281339-6a20-482e-8064-4cf96c678d76)
+* **GECX API Reference**: [`BidiRunSession.md`](docs/BidiRunSession.md)
+* **Requirements & Meeting Note**: [`meeting_note.md`](docs/meeting_note.md)
+* **Enterprise Reference SDD**: [`ex_sdd.md`](docs/ex_sdd.md)
+* **Technical Design Document**: [`tdd.md`](docs/tdd.md)
+* **Reference Live Agent Gateway**: [https://enterprise-agent-gateway-xxxxx.uc.gateway.dev/](https://enterprise-agent-gateway-xxxxx.uc.gateway.dev/)
+* **CX Agent Studio Console**: [https://ces.cloud.google.com/projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id](https://ces.cloud.google.com/projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id)
 * **CXAS Automation Tool (SCRAPI)**: [https://github.com/GoogleCloudPlatform/cxas-scrapi.git](https://github.com/GoogleCloudPlatform/cxas-scrapi.git)
 * **GECX Session Parameter Resolution Guide**: [Google Drive Link](https://drive.google.com/open?id=17-eE1RXfGrLfRM0ut2-k8lktxiDq2TOeAN4jUe6uHnI)

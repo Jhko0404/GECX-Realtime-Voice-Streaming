@@ -47,7 +47,7 @@ fi
 # Load environment variables
 export $(grep -v '^#' .env | xargs -d '\n' 2>/dev/null || true)
 
-PROJECT_ID=${PROJECT_ID:-"gemeni-workshop"}
+PROJECT_ID=${PROJECT_ID:-"your-gcp-project-id"}
 echo -e "${GREEN}✅ 대상 GCP 프로젝트 ID: ${PROJECT_ID}${NC}"
 gcloud config set project "${PROJECT_ID}" --quiet 2>/dev/null || true
 

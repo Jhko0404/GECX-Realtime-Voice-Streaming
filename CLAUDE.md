@@ -30,6 +30,9 @@
 
 ### Google Cloud Deployment
 ```bash
+# 0. One-Click Quickstart Deployment (Recommended)
+./scripts/quickstart.sh [PROJECT_ID] [APP_ID] [REGION]
+
 # 1. Deploy Private Cloud Run BFF
 ./scripts/deploy_cloudrun.sh
 
@@ -55,8 +58,8 @@ python3 scripts/stress_test_10m.py http://localhost:8080 600
 ---
 
 ## 4. Key GCP Environment Metadata
-* **Project ID**: `gemeni-workshop`
+* **Project ID**: `your-gcp-project-id`
 * **Region / Location**: `us-central1` / `us`
-* **App ID**: `83281339-6a20-482e-8064-4cf96c678d76`
+* **App ID**: `your-gecx-app-id`
 * **Cloud Run Service**: `gecx-streaming-bff`
 * **API Gateway ID**: `gecx-agent-gateway`
