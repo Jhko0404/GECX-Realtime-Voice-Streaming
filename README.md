@@ -1,4 +1,4 @@
-# GECX Real-Time Voice Streaming & Telemetry Console
+# 🎙️ Google Cloud GECX Real-Time Voice Streaming & Telemetry Console
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -8,19 +8,19 @@
 [![GECX](https://img.shields.io/badge/GECX-BidiRunSession_A2A-blue?style=flat)](https://ces.cloud.google.com)
 
 > **Repository**: [https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming](https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming)  
-> **Parent Documentation**: [System Design Document (docs/sdd.md)](docs/sdd.md) · [Technical Design Document (docs/tdd.md)](docs/tdd.md)
+> **Target API**: Google Cloud CX Agent Studio (GECX) `ces.googleapis.com` (BidiRunSession)
 
 ---
 
 ## 📌 Executive Overview (개요 및 목적)
 
-본 프로젝트는 **Google Cloud CX Agent Studio (GECX, `ces.googleapis.com`)**의 실시간 양방향 스트리밍 API인 **`BidiRunSession`**을 활용한 **실시간 음성 AI(Audio-to-Audio) 콘솔 및 소켓 세션 단절 원인 분석(RCA) 진단 시스템**입니다.
+본 솔루션은 **Google Cloud CX Agent Studio (GECX, `ces.googleapis.com`)**의 실시간 양방향 스트리밍 API인 **`BidiRunSession`**을 활용한 **실시간 음성 AI(Audio-to-Audio) 콘솔 및 소켓 세션 단절 원인 분석(RCA) 진단 시스템**입니다.
 
 ### 🎯 핵심 해결 과제 (Key Problem Statement)
-1. **서브세컨드(Sub-Second 0.3~0.5s) 저지연 음성 대화 실현**:
-   * 기존 STT ➡️ LLM ➡️ TTS 3단계 직렬 구조의 지연(2~4초)을 극복하고, Gemini 기반 **Audio-to-Audio (A2A) Native Audio** 스트리밍 구현.
+1. **서브세컨드(Sub-Second 0.3~0.5s) 초저지연 음성 대화 실현**:
+   * 기존 STT ➡️ LLM ➡️ TTS 3단계 직렬 구조의 지연(2~4초)을 극복하고, Gemini 기반 **Audio-to-Audio (A2A) Native Audio** 실시간 스트리밍 구현.
 2. **80~120초 소켓 세션 단절 원인 실증 분석 (RCA Telemetry)**:
-   * 현업 환경에서 관측된 80~120초 단절 현상에 대해 조기 방어(재연결) 대신 **RFC 6455 Close Code(1006 등) 및 밀리초 텔레메트리 로그를 수집하여 5대 가설(Server Timeout / Proxy Idle / Silence VAD 등)을 과학적으로 검증**.
+   * 현업 환경에서 발생하는 80~120초 소켓 단절 현상에 대해 **RFC 6455 Close Code(1006, 1007 등) 및 마이크로초 텔레메트리 로그를 수집하여 5대 가설(Server Timeout / Proxy Idle / Silence VAD 등)을 과학적으로 검증**.
 3. **엔터프라이즈 제어/데이터 플레인 분리 & 비공개 보안 아키텍처**:
    * **Google Cloud API Gateway**를 통해 세션 발급(OIDC)을 수행하고, **비공개 Cloud Run BFF**와 단기 서명 티켓(JWT, 60s TTL)으로 WebSocket 직접 연결.
 
@@ -34,24 +34,24 @@
 flowchart TB
     subgraph ClientLayer["1. Web Client (taste-skill Standard)"]
         direction TB
-        Mic["Microphone Ingest<br>(44.1k/48k AudioContext)"]
-        Worklet["AudioWorklet Node<br>(16kHz LINEAR16 Downsampler)"]
-        CockpitUI["2-Column Cockpit Interface<br>• Canvas 2D Live Waveform (60 FPS)<br>• Real-time STT & Response Stream<br>• Live Frame Inspector & RCA Modal"]
+        Mic["Microphone Ingest<br/>(44.1k/48k AudioContext)"]
+        Worklet["AudioWorklet Node<br/>(16kHz LINEAR16 Downsampler)"]
+        CockpitUI["2-Column Cockpit Interface<br/>• Canvas 2D Live Waveform (60 FPS)<br/>• Real-time STT & Response Stream<br/>• Live Frame Inspector & RCA Modal"]
         Mic --> Worklet
         Worklet --> CockpitUI
     end
 
     subgraph ControlPlane["2. Control Plane (Ingress Security)"]
-        Gateway["Google Cloud API Gateway<br>(gecx-agent-gateway)<br>• Public Ingress & CORS<br>• OIDC ID Token Injection"]
+        Gateway["Google Cloud API Gateway<br/>(gecx-agent-gateway)<br/>• Public Ingress & CORS<br/>• OIDC ID Token Injection"]
     end
 
     subgraph DataPlane["3. Data Plane (Private Cloud Run BFF)"]
         direction TB
-        BFF["gecx-streaming-bff (Private Container)<br>• POST /api/v1/session/start (JWT Ticket)<br>• WSS /ws/stream (Data Proxy)<br>• Microsecond Telemetry Logger<br>• RFC 6455 Close Code Parser"]
+        BFF["gecx-streaming-bff (Private Container)<br/>• POST /api/v1/session/start (JWT Ticket)<br/>• WSS /ws/stream (Data Proxy)<br/>• Microsecond Telemetry Logger<br/>• RFC 6455 Close Code Parser"]
     end
 
     subgraph GECXLayer["4. Google Cloud Suite"]
-        GECX["ces.googleapis.com (BidiRunSession)<br>• Location: us (us-central1)<br>• App ID: your-gecx-app-id"]
+        GECX["ces.googleapis.com (BidiRunSession)<br/>• Location: us (us-central1)<br/>• App Resource: projects/{project}/locations/us/apps/{app_id}"]
     end
 
     CockpitUI -->|"1. HTTPS REST /session/start"| Gateway
@@ -67,64 +67,38 @@ flowchart TB
 
 | 기능 (Feature) | 설명 (Description) |
 | :--- | :--- |
-| **2열 스플릿 콕핏 UI** | `Leonxlnx/taste-skill` 표준을 준수한 Linear 스타일의 고밀도 다크 테크 엔지니어링 콘솔. |
+| **2열 스플릿 콕핏 UI** | `Leonxlnx/taste-skill` 표준을 준수한 Linear 다크 테크 스타일의 엔지니어링 대시보드. |
 | **Canvas 2D 오실로스코프** | Web Audio API 기반 60 FPS 실시간 오디오 파형 (발화/무음/Barge-in 감응형 색상 전환). |
 | **Always-On 오디오 청킹** | 50ms 고정 주기 (800 샘플, 1,600 바이트, 20Hz) 무중단 전송으로 백엔드 VAD 주변 노이즈 추적 지원. |
 | **Instant Barge-In Flush** | 서버 `interruptionSignal` 수신 시 현재 재생 중인 에이전트 오디오 버퍼 즉시 중단. |
 | **초정밀 프레임 인스펙터** | 실시간 WebSocket 패킷 스트림 테이블 (TX 오디오 청크 / RX STT / 시스템 이벤트 필터링). |
 | **단절 RCA 진단 모달** | 80~120초 단절 발생 시 RFC 6455 Close Code 및 5대 가설 매핑 결과 표출, JSON 리포트 원클릭 다운로드. |
-| **오프라인 Mock GECX** | GCP 연결 없이 로컬에서 90초/120초 단절 시뮬레이션 및 테스트 지원 (`tests/mock_gecx_server.py`). |
+| **오프라인 Mock GECX** | GCP 연결 없이 로컬에서 90초/120초 단절 시뮬레이션 및 테스트 지원 (`--mock 90`). |
 
 ---
 
-## 📁 Repository Directory Structure
+## 🎛️ Audio DSP & Streaming Specifications
 
-```text
+| 파라미터 | 규격 / 사양 | 기술적 근거 및 설명 |
+| :--- | :--- | :--- |
+| **오디오 포맷** | `LINEAR16` (PCM 16-bit Mono, Little-Endian) | GECX BidiRunSession 기본 입력 규격 |
+| **샘플 레이트** | 16,000 Hz (16 kHz) | Web Audio `AudioWorklet`을 통해 44.1k/48k에서 실시간 다운샘플링 |
+| **청크 단위 (Chunk)** | 50ms (800 샘플 = 1,600 바이트) | 음성 인식 지연 최소화 및 실시간 VAD 최적 주기 |
+| **전송 케이던스** | 20 Chunks/sec (20 Hz 고정) | 타이머 지터 없는 Web Worker 기반 무중단 발송 |
+| **무음 감지 임계값** | $\text{dB}_{\text{FS}} < -50\text{dB}$ | 마이크 입력 무음 판별 및 RMS 레벨 추적 |
+| **Barge-In 처리** | 즉시 버퍼 플러시 (`audio_player.flush()`) | 사용자 재발화 시 에이전트 음성 0.1초 내 즉각 음소거 |
 
-├── docs/                         # 시스템 및 기술 설계 문서
-│   ├── sdd.md                    # Solution Design Document (SDD)
-│   ├── tdd.md                    # Technical Design Document (TDD)
-│   ├── meeting_note.md           # 현업 요구사항 및 이슈 정의서
-│   ├── BidiRunSession.md         # GECX 공식 API 레퍼런스 및 사양
-│   └── ex_sdd.md                 # 엔터프라이즈 SDD 레퍼런스 템플릿
-├── bff/                          # Cloud Run Backend-for-Frontend (Python FastAPI)
-│   ├── main.py                   # FastAPI 엔트리포인트 (REST & WebSocket 프록시)
-│   ├── config.py                 # GCP 프로젝트 및 환경 설정 로더
-│   ├── auth.py                   # 세션 서명 토큰(JWT HS256) 발급/검증
-│   ├── gecx_client.py            # GECX BidiRunSession WSS 스트리밍 클라이언트
-│   └── telemetry.py              # 프레임 레벨 로깅, RMS 계산 & RCA 진단 모듈
-├── web/                          # React Frontend (taste-skill Standard)
-│   ├── package.json              # 프론트엔드 의존성
-│   ├── vite.config.ts            # Vite 프록시 및 빌드 설정
-│   ├── tailwind.config.ts        # Linear-style 테마 토큰
-│   ├── index.html                # HTML 템플릿 (Geist Font)
-│   └── src/
-│       ├── App.tsx               # 2열 콕핏 메인 인터페이스
-│       ├── audio/                # AudioWorklet PCM 16kHz & 재생 큐 매니저
-│       ├── services/             # WebSocket 통신 서비스
-│       └── components/           # UI 컴포넌트 (Visualizer, ChatWindow, FrameInspector 등)
-├── api_gateway/                  # Google Cloud API Gateway 명세
-│   ├── openapi_gateway.yaml      # x-google-backend가 정의된 Gateway 명세
-│   └── gateway_config.json       # Gateway 배포 메타데이터
-├── tests/                        # 단위 테스트 및 시뮬레이션
-│   ├── mock_gecx_server.py       # 로컬 90s/120s 단절 시뮬레이션 Mock 서버
-│   ├── test_audio.py             # DSP 오디오 변환 및 RMS 테스트
-│   ├── test_auth.py              # JWT 인증 테스트
-│   ├── test_telemetry.py         # 텔레메트리 로깅 테스트
-│   └── test_mock_stream.py       # E2E Mock 스트리밍 통합 테스트
-├── scripts/                      # 자동화 쉘 스크립트
-│   ├── setup_env.sh              # Python 가상환경, gcloud 로그인, API 활성화
-│   ├── run_local.sh              # 로컬 원클릭 실행 (BFF + React + Mock)
-│   ├── deploy_cloudrun.sh        # Cloud Run 비공개 배포 및 IAM 설정
-│   ├── deploy_gateway.sh         # Google Cloud API Gateway 배포
-│   ├── stress_test_10m.py        # 10분 연속 스트리밍 부하/진단 테스트 러너
-│   └── cleanup.sh                # PoC 리소스 안전 삭제
-├── Dockerfile                    # Multi-stage Container 빌드 파일
-├── requirements.txt              # Backend 패키지 의존성
-├── .env.example                  # 환경변수 템플릿
-├── CLAUDE.md                     # 프로젝트 개발 지침서
-└── README.md                     # 본 문서
-```
+---
+
+## 🔬 80~120초 세션 단절 RCA 5대 가설 및 해결 매트릭스
+
+| 가설 (Hypothesis) | 원인 분석 (Root Cause) | 실증 검증 및 해결책 (Resolution) |
+| :--- | :--- | :--- |
+| **H1: 프록시/서버 타임아웃** | Cloud Run(기본 300s) 및 API Gateway 타임아웃 | WebSocket 프록시 타임아웃을 3,600초로 상향하고 지속 패킷 교환 유지 |
+| **H2: 무음 VAD 타임아웃** | 발화가 없을 때 소켓 유휴로 인한 업스트림 단절 | **Always-On Silence Chunking (`getSilentChunkBase64`)**으로 50ms 무음 패킷 연속 전송 |
+| **H3: 턴(Turn) 불일치 (1007)** | 에이전트 응답 수신 중 사용자 오디오 잘못 전송 | **Turn-Gated State Machine (`USER_TURN` ↔ `AGENT_TURN`)**으로 엄격 제어 |
+| **H4: OAuth 토큰 만료** | 3,600초 유효 토큰의 갱신 누락 | Google Auth ADC 자격증명 자동 리프레시 모듈 적용 |
+| **H5: GECX 세션 수명 제한** | 업스트림 엔진의 최대 세션 타임아웃 | 텔레메트리 Close Code(1000/1006) 기반 자동 재연결 세션 연속성 보장 |
 
 ---
 
@@ -166,26 +140,23 @@ claude
 
 #### Step 1. 환경 초기화 및 필수 API 활성화
 ```bash
-# 가상환경 구축, gcloud 로그인 점검 및 API 활성화
 ./scripts/setup_env.sh
 ```
 
 #### Step 2. Private Cloud Run BFF 배포
 ```bash
-# Docker Multi-Stage Container 빌드 & 비공개 Cloud Run 배포
 ./scripts/deploy_cloudrun.sh
 ```
 
 #### Step 3. Google Cloud API Gateway Ingress 배포
 ```bash
-# OpenAPI 기반 Zero-Trust Gateway Ingress 라우팅 배포
 ./scripts/deploy_gateway.sh
 ```
 
 ---
 
 ### 🧪 로컬 오프라인 Mock 모드 & 고객 시연 (Offline Simulation)
-GCP 권한이나 네트워크 연결 없이도 로컬에서 1초 만에 전체 UI와 80~120초 세션 단절 RCA 진단 모달을 완벽하게 시연할 수 있습니다.
+GCP 권한이나 네트워크 연결 없이도 로컬에서 1초 만에 전체 UI와 90초/120초 세션 단절 RCA 진단 모달을 완벽하게 시연할 수 있습니다.
 
 ```bash
 # [모드 A] 로컬 90초 단절 시뮬레이션 Mock 모드로 실행 (RCA 모달 즉각 시연)
@@ -215,28 +186,65 @@ python3 scripts/stress_test_10m.py http://localhost:8080 600
 
 ---
 
-## 🔐 Predefined GCP Resources & Metadata
+## 📁 Repository Directory Structure
 
-| Resource | Value | Description |
-| :--- | :--- | :--- |
-| **GCP Project ID** | `your-gcp-project-id` | 대상 워크숍 프로젝트 |
-| **Location / Region** | `us` / `us-central1` | GECX 리전 및 Cloud Run/Gateway 리전 |
-| **CXAS App ID** | `your-gecx-app-id` | CX Agent Studio 앱 리소스 |
-| **Reference Gateway** | `https://enterprise-agent-gateway-xxxxx.uc.gateway.dev/` | 레퍼런스 Agent Gateway |
-| **CXAS Console** | [https://ces.cloud.google.com/...](https://ces.cloud.google.com/projects/your-gcp-project-id/locations/us/apps/your-gecx-app-id) | 콘솔 직접 접속 링크 |
+```text
+GECX-Realtime-Voice-Streaming/
+├── bff/                          # Cloud Run Backend-for-Frontend (Python FastAPI)
+│   ├── main.py                   # FastAPI 엔트리포인트 (REST & WebSocket 프록시)
+│   ├── config.py                 # GCP 프로젝트 및 환경 설정 로더
+│   ├── auth.py                   # 세션 서명 토큰(JWT HS256) 발급/검증
+│   ├── gecx_client.py            # GECX BidiRunSession WSS 스트리밍 클라이언트
+│   └── telemetry.py              # 프레임 레벨 로깅, RMS 계산 & RCA 진단 모듈
+├── web/                          # React Frontend (taste-skill Standard)
+│   ├── package.json              # 프론트엔드 의존성
+│   ├── vite.config.ts            # Vite 프록시 및 빌드 설정
+│   ├── tailwind.config.ts        # Linear-style 테마 토큰
+│   ├── index.html                # HTML 템플릿 (Geist Font)
+│   └── src/
+│       ├── App.tsx               # 2열 콕핏 메인 인터페이스
+│       ├── audio/                # AudioWorklet PCM 16kHz & 재생 큐 매니저
+│       ├── services/             # WebSocket 통신 서비스
+│       └── components/           # UI 컴포넌트 (Visualizer, ChatWindow, FrameInspector 등)
+├── api_gateway/                  # Google Cloud API Gateway 명세
+│   ├── openapi_gateway.yaml      # x-google-backend가 정의된 Gateway 명세
+│   └── gateway_config.json       # Gateway 배포 메타데이터
+├── tests/                        # 단위 테스트 및 시뮬레이션
+│   ├── mock_gecx_server.py       # 로컬 90s/120s 단절 시뮬레이션 Mock 서버
+│   ├── test_all_buttons_and_features.py # 전체 UI/API 버튼 기능 종합 테스트
+│   ├── test_audio.py             # DSP 오디오 변환 및 RMS 테스트
+│   ├── test_auth.py              # JWT 인증 테스트
+│   ├── test_telemetry.py         # 텔레메트리 로깅 테스트
+│   └── test_mock_stream.py       # E2E Mock 스트리밍 통합 테스트
+├── scripts/                      # 자동화 쉘 스크립트
+│   ├── quickstart.sh             # 통합 원클릭 자동 배포
+│   ├── setup_env.sh              # Python 가상환경, gcloud 로그인, API 활성화
+│   ├── run_local.sh              # 로컬 원클릭 실행 (BFF + React + Mock)
+│   ├── deploy_cloudrun.sh        # Cloud Run 비공개 배포 및 IAM 설정
+│   ├── deploy_gateway.sh         # Google Cloud API Gateway 배포
+│   ├── stress_test_10m.py        # 10분 연속 스트리밍 부하/진단 테스트 러너
+│   └── cleanup.sh                # PoC 리소스 안전 삭제
+├── docs/assets/                  # 아키텍처 다이어그램 및 이미지 자산
+├── Dockerfile                    # Multi-stage Container 빌드 파일
+├── requirements.txt              # Backend 패키지 의존성
+├── .env.example                  # 환경변수 템플릿
+├── CLAUDE.md                     # 프로젝트 개발 지침서
+└── README.md                     # 본 통합 매뉴얼 문서
+```
 
 ---
 
-## 📚 Technical Documentation Index
+## 🛠️ Master Troubleshooting Matrix (트러블슈팅)
 
-* [System Design Document (SDD)](docs/sdd.md) - 전체 아키텍처 다이어그램 및 엔드투엔드 시퀀스
-* [Technical Design Document (TDD)](docs/tdd.md) - 마이크로초 텔레메트리 및 RCA 진단 알고리즘
-* [Resource Map (전체 리소스 총괄 맵)](docs/resource_map.md) - 인프라, IAM, API, 데이터셋, 스크립트 단일 뷰
-* [Troubleshooting & Resolution Guide](docs/troubleshooting.md) - 실환경 배포 및 연동 트러블슈팅 7대 항목
-* [GECX BidiRunSession API Guide](docs/BidiRunSession.md) - 실시간 스트리밍 gRPC/WebSocket 프로토콜 명세
-* [Project History & Timeline](HISTORY.md) - 단계별 개발 및 배포 이력
+| 에러 / 증상 | 발생 원인 | 즉시 해결 방법 |
+| :--- | :--- | :--- |
+| **`HTTP 401 Unauthorized`** | OIDC ID Token 누락 또는 IAM Invoker 권한 부재 | API Gateway 서비스 계정에 `roles/run.invoker` 부여 확인 |
+| **`HTTP 403 Forbidden (CES)`** | GECX API 권한 부족 | BFF SA에 `roles/ces.invoker` 권한 부여 및 App ID 리소스 경로 점검 |
+| **`WebSocket 1006 Abnormal Closure`** | 피어 소켓 강제 단절 (타임아웃 또는 네트워크 단절) | RCA 모달 리포트 확인 후 Always-On 무음 청크 전송 활성화 |
+| **`WebSocket 1007 Policy Violation`** | 에이전트 발화 중 사용자 오디오 동시 인입 | `turn-gated` 모드 활성화로 사용자/에이전트 턴 제어 |
+| **`HTTP 504 Gateway Timeout`** | 백엔드 응답 지연 (60s 초과) | 세션 시작 API 비동기 처리 및 폴링 방식으로 전환 |
 
 ---
 
 ## 📄 License & Attribution
-Designed and built for **Google Cloud Customer Experience (GECX) Real-Time Streaming Evaluation**.
+Designed and built for **Google Cloud Customer Experience (GECX) Real-Time Voice Streaming Evaluation**.
