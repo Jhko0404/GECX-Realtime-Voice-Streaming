@@ -315,5 +315,3 @@ func main() {
 ```
 
 ---
-
-* [GECX Bidi Session Parameter Resolution Guide](https://drive.google.com/open?id=17-eE1RXfGrLfRM0ut2-k8lktxiDq2TOeAN4jUe6uHnI)

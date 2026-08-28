@@ -217,12 +217,9 @@ GECX-Realtime-Voice-Streaming/
 │   ├── deploy_gateway.sh         # Google Cloud API Gateway 배포
 │   ├── stress_test_10m.py        # 10분 연속 스트리밍 부하/진단 테스트 러너
 │   └── cleanup.sh                # PoC 리소스 안전 삭제
-├── docs/                         # 상세 기술 및 아키텍처 설계 문서
-│   ├── sdd.md                    # Solution Design Document (SDD)
-│   ├── tdd.md                    # Technical Design Document (TDD)
+├── docs/                         # 상세 기술 및 아키텍처 레퍼런스
 │   ├── BidiRunSession.md         # GECX BidiRunSession 프로토콜 명세
 │   ├── troubleshooting.md        # 실환경 트러블슈팅 및 장애 해결 매뉴얼
-│   ├── resource_map.md           # 전체 GCP 인프라/IAM/스크립트 맵
 │   └── assets/                   # 아키텍처 다이어그램 및 이미지 자산
 ├── Dockerfile                    # Multi-stage Container 빌드 파일
 ├── requirements.txt              # Backend 패키지 의존성
@@ -249,12 +246,8 @@ GECX-Realtime-Voice-Streaming/
 
 개발자 및 엔지니어를 위한 상세 기술 사양 문서 목록입니다:
 
-* [Solution Design Document (docs/sdd.md)](docs/sdd.md) - 엔드투엔드 솔루션 아키텍처, 제어/데이터 플레인 분리 설계 및 패킷 시퀀스
-* [Technical Design Document (docs/tdd.md)](docs/tdd.md) - 오디오 버퍼 연산, 텔레메트리 로깅 및 RCA 진단 알고리즘
-* [GECX BidiRunSession API Guide (docs/BidiRunSession.md)](docs/BidiRunSession.md) - GECX 실시간 gRPC/WebSocket 프로토콜 스펙
+* [GECX BidiRunSession API Guide (docs/BidiRunSession.md)](docs/BidiRunSession.md) - GECX 실시간 gRPC/WebSocket 프로토콜 스펙 및 메시지 규격
 * [Troubleshooting & Resolution Guide (docs/troubleshooting.md)](docs/troubleshooting.md) - 실환경 배포 및 연동 7대 이슈 마스터 매뉴얼
-* [Resource Map (docs/resource_map.md)](docs/resource_map.md) - GCP 인프라, IAM 권한, API 및 배포 스크립트 단일 뷰
-* [Turn-Gated & Barge-In Resolution (docs/gecx_1007_turn_bargein_resolution_guide.md)](docs/gecx_1007_turn_bargein_resolution_guide.md) - 1007 턴 충돌 해결 가이드
 
 ---
 
