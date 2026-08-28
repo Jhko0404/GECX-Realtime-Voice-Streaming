@@ -20,9 +20,9 @@
 
 ---
 
-## 2. Quick Start: Clone and Run in 30 Seconds
+## 2. Prerequisites & Environment Setup (사전 준비 및 환경 설정)
 
-### Step 0: Clone the Repository
+### Step 1: 저장소 클론 (Clone Repository)
 ```bash
 git clone https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming.git
 cd GECX-Realtime-Voice-Streaming
@@ -30,14 +30,50 @@ cd GECX-Realtime-Voice-Streaming
 
 ---
 
+### Step 2: Python 가상환경 구성 (Virtual Environment)
+```bash
+# 1. Python 가상환경 생성 (Python 3.11 이상 권장)
+python3 -m venv .venv
+
+# 2. 가상환경 활성화 (macOS / Linux)
+source .venv/bin/activate
+
+# 3. 의존성 패키지 설치
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# (또는 스크립트로 자동 구성)
+./scripts/setup_env.sh
+```
+
+---
+
+### Step 3: Google Cloud 계정 로그인 & 프로젝트 설정 (GCP Authentication)
+Google Cloud API 및 GECX 서비스를 로컬과 배포 환경에서 호출하기 위해 `gcloud` 로그인을 진행합니다.
+
+```bash
+# 1. Google Cloud CLI 사용자 계정 로그인
+gcloud auth login
+
+# 2. 로컬 백엔드 연동용 Application Default Credentials(ADC) 로그인
+gcloud auth application-default login
+
+# 3. 사용할 GCP 프로젝트 ID 설정
+gcloud config set project [YOUR_GCP_PROJECT_ID]
+
+# 예시:
+gcloud config set project my-gcp-ai-project
+```
+
+---
+
+## 3. Quick Start: Run the Demo in 30 Seconds
+
 ### Option A: Local Mock Demo (GCP 계정 없이 30초 내 즉시 UI/오디오 시연)
 GCP 프로젝트나 클라우드 권한이 없어도 로컬 모의(Mock) GECX 서버를 통해 전체 실시간 음성 스트리밍 콘솔과 오디오 시각화, Barge-in 동작을 바로 체험할 수 있습니다.
 
 ```bash
-# 1. 가상환경 구성 및 의존성 자동 설치
-./scripts/setup_env.sh
-
-# 2. 로컬 모의(Mock) 스트리밍 서버 모드로 실행
+# 로컬 모의(Mock) 스트리밍 서버 모드로 실행 (90초 단절 시뮬레이션 포함)
 ./scripts/run_local.sh --mock 90
 ```
 1. 웹 브라우저에서 `http://localhost:8080` 접속
@@ -48,14 +84,13 @@ GCP 프로젝트나 클라우드 권한이 없어도 로컬 모의(Mock) GECX �
 
 ### Option B: Live GECX Connected Mode (실제 GCP 환경 연동 로컬 실행)
 ```bash
-# GCP Application Default Credentials(ADC) 로그인 후 실행
-gcloud auth application-default login
+# 실제 ces.googleapis.com 연결 모드로 로컬 실행
 ./scripts/run_local.sh
 ```
 
 ---
 
-## 3. Key Demo Features & Capabilities
+## 4. Key Demo Features & Capabilities
 
 ### 1) 실시간 양방향 음성 대화 (Audio-to-Audio Native Streaming)
 * 브라우저 마이크 음성을 Web Audio `AudioWorklet`을 통해 16kHz LINEAR16 PCM으로 실시간 변환하고, 50ms 단위 청크로 무중단 스트리밍합니다.
@@ -76,7 +111,7 @@ gcloud auth application-default login
 
 ---
 
-## 4. System Architecture
+## 5. System Architecture
 
 클라이언트 브라우저와 Google Cloud 백엔드 간의 제어 플레인(인증/세션 발급)과 데이터 플레인(고속 WebSocket 스트리밍)이 안전하게 분리된 구조입니다.
 
@@ -115,7 +150,7 @@ flowchart TB
 
 ---
 
-## 5. Audio & Streaming Specifications
+## 6. Audio & Streaming Specifications
 
 | 파라미터 | 규격 / 사양 | 기술적 설명 |
 | :--- | :--- | :--- |
@@ -128,7 +163,7 @@ flowchart TB
 
 ---
 
-## 6. Google Cloud Production Deployment Guide
+## 7. Google Cloud Production Deployment Guide
 
 ### 사전 준비사항 (Prerequisites)
 1. **Google Cloud SDK (`gcloud`)** 설치 및 로그인 (`gcloud auth login`)
@@ -201,7 +236,7 @@ python3 scripts/stress_test_10m.py http://localhost:8080 600
 
 ---
 
-## 7. Repository Directory Structure
+## 8. Repository Directory Structure
 
 ```text
 GECX-Realtime-Voice-Streaming/
@@ -252,7 +287,7 @@ GECX-Realtime-Voice-Streaming/
 
 ---
 
-## 8. Troubleshooting & FAQ
+## 9. Troubleshooting & FAQ
 
 | 에러 / 증상 | 발생 원인 | 즉시 해결 방법 |
 | :--- | :--- | :--- |
@@ -264,7 +299,7 @@ GECX-Realtime-Voice-Streaming/
 
 ---
 
-## 9. Technical Architecture Documentation Index
+## 10. Technical Architecture Documentation Index
 
 개발자 및 엔지니어를 위한 상세 기술 사양 문서 목록입니다:
 
@@ -273,5 +308,5 @@ GECX-Realtime-Voice-Streaming/
 
 ---
 
-## 10. License & Attribution
+## 11. License & Attribution
 Designed and built for **Google Cloud Customer Experience (GECX) Real-Time Voice Streaming Evaluation**.
