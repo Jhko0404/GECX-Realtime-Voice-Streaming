@@ -7,7 +7,7 @@
 [![Google Cloud](https://img.shields.io/badge/Google_Cloud-API_Gateway_%2B_Cloud_Run-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com)
 [![GECX](https://img.shields.io/badge/GECX-BidiRunSession_A2A-blue?style=flat)](https://ces.cloud.google.com)
 
-> **Repository**: [https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming](https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming)  
+> **Repository**: [https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming](https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming)  
 > **Parent Documentation**: [System Design Document (docs/sdd.md)](docs/sdd.md) · [Technical Design Document (docs/tdd.md)](docs/tdd.md)
 
 ---

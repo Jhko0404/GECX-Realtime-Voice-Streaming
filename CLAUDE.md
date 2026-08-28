@@ -2,7 +2,7 @@
 
 ## 1. Project Overview & Rules
 * **Project Name**: GECX Real-Time Voice Streaming & Telemetry Console
-* **Repository**: [https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming](https://github.com/Jhko0404/GECX-Real-Time-Voice-Streaming)
+* **Repository**: [https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming](https://github.com/Jhko0404/GECX-Realtime-Voice-Streaming)
 * **Design Standard**: `Leonxlnx/taste-skill` Anti-Slop Frontend Standard (Linear Dark Tech / DevTool Minimalist)
 * **Core Goal**: Technical validation and empirical Root Cause Analysis (RCA) of GECX `BidiRunSession` 80~120s disconnection issues with microsecond telemetry logging and customer-ready demonstration console.
 
