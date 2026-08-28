@@ -47,9 +47,14 @@ fi
 # Load environment variables
 export $(grep -v '^#' .env | xargs -d '\n' 2>/dev/null || true)
 
-PROJECT_ID=${PROJECT_ID:-"your-gcp-project-id"}
+PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
+if [ -z "${PROJECT_ID}" ] || [ "${PROJECT_ID}" = "your-gcp-project-id" ]; then
+    PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
+fi
 echo -e "${GREEN}✅ 대상 GCP 프로젝트 ID: ${PROJECT_ID}${NC}"
-gcloud config set project "${PROJECT_ID}" --quiet 2>/dev/null || true
+if [ -n "${PROJECT_ID}" ]; then
+    gcloud config set project "${PROJECT_ID}" --quiet 2>/dev/null || true
+fi
 
 # 4. 필수 GCP API 활성화 점검
 echo -e "\n${BLUE}📦 필수 GCP API 활성화 상태 점검 중...${NC}"

@@ -24,17 +24,25 @@ if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs -d '\n' 2>/dev/null || true)
 fi
 
-PROJECT_ID=${PROJECT_ID:-"your-gcp-project-id"}
+PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
+if [ -z "${PROJECT_ID}" ] || [ "${PROJECT_ID}" = "your-gcp-project-id" ]; then
+    PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
+fi
+if [ -z "${PROJECT_ID}" ]; then
+    echo -e "${RED}❌ GCP Project ID가 설정되지 않았습니다. gcloud config set project [PROJECT_ID] 또는 .env를 확인하세요.${NC}"
+    exit 1
+fi
+
 REGION=${REGION:-"us-central1"}
 LOCATION=${LOCATION:-"us"}
 APP_ID=${APP_ID:-"your-gecx-app-id"}
 SERVICE_NAME=${SERVICE_NAME:-"gecx-streaming-bff"}
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
-echo -e "👉 GCP Project ID:  ${GREEN}${PROJECT_ID}${NC}"
-echo -e "👉 Region:          ${GREEN}${REGION}${NC}"
-echo -e "👉 Cloud Run Name:  ${GREEN}${SERVICE_NAME}${NC}"
-echo -e "👉 CXAS App ID:     ${GREEN}${APP_ID}${NC}\n"
+echo -e "  • GCP Project ID:  ${GREEN}${PROJECT_ID}${NC}"
+echo -e "  • Region:          ${GREEN}${REGION}${NC}"
+echo -e "  • Cloud Run Name:  ${GREEN}${SERVICE_NAME}${NC}"
+echo -e "  • CXAS App ID:     ${GREEN}${APP_ID}${NC}\n"
 
 # 2. Service Accounts & IAM Setup
 BFF_SA="gecx-bff-sa@${PROJECT_ID}.iam.gserviceaccount.com"
